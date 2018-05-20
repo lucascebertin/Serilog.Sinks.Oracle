@@ -15,14 +15,13 @@ namespace Serilog
         public static LoggerConfiguration Oracle(
             this LoggerSinkConfiguration loggerConfiguration,
             string connectionString,
-            string tableSpace,
-            string tableName,
+            string tableSpaceAndTableName,
+            string tableSpaceAndFunctionName,
             LogEventLevel restrictedToMinimumLevel = LevelAlias.Minimum,
             int batchPostingLimit = OracleSink.DefaultBatchPostingLimit,
             TimeSpan? period = null,
             int queueLimit = 100,
             IFormatProvider formatProvider = null,
-            bool autoCreateSqlTable = false,
             ColumnOptions columnOptions = null
         )
         {
@@ -38,8 +37,8 @@ namespace Serilog
                     queueLimit,
                     formatProvider,
                     columnOptions,
-                    tableSpace,
-                    tableName,
+                    tableSpaceAndTableName,
+                    tableSpaceAndFunctionName,
                     connectionString
                 ),
                 restrictedToMinimumLevel
@@ -51,31 +50,24 @@ namespace Serilog
     {
         public const int DefaultBatchPostingLimit = 50;
         public static readonly TimeSpan DefaultPeriod = TimeSpan.FromSeconds(5);
-        private readonly ColumnOptions _columnOptions;
-        private readonly string _tableSpace;
-        private readonly string _tableName;
-        private readonly IFormatProvider _formatProvider;
         private readonly HashSet<string> _additionalDataColumnNames;
         private readonly Database _database;
 
 
         public OracleSink(int batchSizeLimit, TimeSpan period, int queueLimit, IFormatProvider formatProvider,
-            ColumnOptions columnOptions, string tableSpace, string tableName, string connectionString)
+            ColumnOptions columnOptions, string tableSpaceAndTableName, string tableSpaceAndFunctionName, string connectionString)
             : base(batchSizeLimit, period, queueLimit)
         {
-            _columnOptions = columnOptions ?? new ColumnOptions();
-            _tableSpace = tableSpace;
-            _tableName = tableName;
-            _formatProvider = formatProvider;
+            var receivedColumnOptions = columnOptions ?? new ColumnOptions();
 
-            if (_columnOptions.AdditionalDataColumns != null)
+            if (receivedColumnOptions.AdditionalDataColumns != null)
                 _additionalDataColumnNames = new HashSet<string>(
-                    _columnOptions.AdditionalDataColumns.Select(c => c.ColumnName),
+                    receivedColumnOptions.AdditionalDataColumns.Select(c => c.ColumnName),
                     StringComparer.OrdinalIgnoreCase
                 );
 
-            _database = new Database(connectionString, _tableSpace, _tableName, 
-                _columnOptions, _additionalDataColumnNames, _formatProvider);
+            _database = new Database(connectionString, tableSpaceAndTableName, tableSpaceAndFunctionName,
+                receivedColumnOptions, _additionalDataColumnNames, formatProvider);
         }
 
         protected override async Task EmitBatchAsync(IEnumerable<LogEvent> events) =>

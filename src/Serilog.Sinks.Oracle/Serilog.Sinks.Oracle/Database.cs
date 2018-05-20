@@ -14,33 +14,32 @@ namespace Serilog.Sinks.Oracle
     public class Database
     {
         private readonly string _connectionString;
-        private readonly string _tableSpace;
-        private readonly string _tableName;
+        private readonly string _tableSpaceAndTableName;
+        private readonly string _tableSpaceAndFunctionName;
         private readonly ColumnOptions _columnOptions;
         private readonly IFormatProvider _formatProvider;
         private readonly Properties _properties;
 
-        public Database(string connectionString, string tableSpace, string tableName, ColumnOptions columnOptions, 
+        public Database(string connectionString, string tableSpaceAndTableName, string tableSpaceAndFunctionName,  ColumnOptions columnOptions,
             HashSet<string> additionalDataColumnNames, IFormatProvider formatProvider)
         {
             _connectionString = connectionString;
-            _tableSpace = tableSpace;
-            _tableName = tableName;
+            _tableSpaceAndTableName = tableSpaceAndTableName;
+            _tableSpaceAndFunctionName = tableSpaceAndFunctionName;
             _columnOptions = columnOptions;
             _formatProvider = formatProvider;
-           _properties = new Properties(columnOptions, additionalDataColumnNames, _formatProvider);
+            _properties = new Properties(columnOptions, additionalDataColumnNames, _formatProvider);
         }
 
         public (string, Dictionary<string, object>) CreateInsertData(DataTable dataTable)
         {
-            var destinationTableName = string.Format("{0}.{1}", _tableSpace, _tableName);
             var parameterDictionary = new Dictionary<string, object>();
             var insertedColumns = dataTable.Columns.Cast<DataColumn>()
                 .Where(x => !x.AutoIncrement).ToList();
 
             var commandString = new StringBuilder();
             var cols = string.Join(", ", insertedColumns.Select(x => $"\"{x.ColumnName}\""));
-            commandString.AppendLine($@"INSERT ALL [INTOS_HERE]");
+            commandString.Append($@"INSERT ALL {Environment.NewLine}[INTOS_HERE]");
 
             var selectBuilder = new StringBuilder();
 
@@ -51,7 +50,7 @@ namespace Serilog.Sinks.Oracle
                 var rows = string.Join(", ", insertedColumns.Select(x =>
                     x.ColumnName == "Id" ? eventsTableRow["Id"] : $":{x.ColumnName}_{i}"));
 
-                selectBuilder.AppendLine($"  INTO {destinationTableName} ({cols}) VALUES ({rows})");
+                selectBuilder.AppendLine($"  INTO {_tableSpaceAndTableName} ({cols}) VALUES ({rows})");
 
                 foreach (var eventsTableColumn in insertedColumns)
                     if (eventsTableColumn.ColumnName != "Id")
@@ -132,9 +131,9 @@ namespace Serilog.Sinks.Oracle
                 SelfLog.WriteLine(error.ToString());
             }
         }
-        private DataTable CreateDataTable()
+        public DataTable CreateDataTable()
         {
-            var eventsTable = new DataTable(_tableName);
+            var eventsTable = new DataTable(_tableSpaceAndTableName);
 
             foreach (var standardColumn in _columnOptions.Store)
             {
@@ -211,7 +210,12 @@ namespace Serilog.Sinks.Oracle
             }
 
             if (_columnOptions.AdditionalDataColumns != null)
-                eventsTable.Columns.AddRange(_columnOptions.AdditionalDataColumns.ToArray());
+            {
+                var dataColumns = _columnOptions.AdditionalDataColumns.Select(x => 
+                    new DataColumn(x.ColumnName, x.DataType));
+
+                eventsTable.Columns.AddRange(dataColumns.ToArray());
+            }
 
             return eventsTable;
         }
@@ -229,7 +233,7 @@ namespace Serilog.Sinks.Oracle
                     switch (column)
                     {
                         case StandardColumn.Id:
-                            row[_columnOptions.Id.ColumnName ?? "Id"] = "get_seq";
+                            row[_columnOptions.Id.ColumnName ?? "Id"] = _tableSpaceAndFunctionName;
                             break;
                         case StandardColumn.Message:
                             row[_columnOptions.Message.ColumnName ?? "Message"] = logEvent.RenderMessage(_formatProvider);

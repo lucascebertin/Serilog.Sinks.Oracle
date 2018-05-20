@@ -46,9 +46,10 @@ END;
 
   var logger = new LoggerConfiguration()
       .MinimumLevel.Debug()
-      .WriteTo.Oracle(connectionString, "YOUR_TABLE_SPACE", "YOUR_TABLE_NAME", LogEventLevel.Debug, 10, TimeSpan.FromSeconds(2))
+      .WriteTo.Oracle(connectionString, "YOUR_TABLE_SPACE.YOUR_TABLE_NAME", "YOUR_TABLE_SPACE.get_seq", LogEventLevel.Debug, 10, TimeSpan.FromSeconds(2))
       .CreateLogger();
 
+  //Be aware of the batch limit and delay time configured up here!
   logger.Debug("Yey, this message will be stored on Oracle!!");
 ```
 
