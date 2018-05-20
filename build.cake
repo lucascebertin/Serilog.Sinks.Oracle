@@ -19,7 +19,7 @@ var nuget = output + Directory("nuget");
 Task("Clean")
     .Does(() =>
     {
-        CleanDirectory(build);
+        CleanDirectory(output);
     });
 
 // Run dotnet restore to restore all package references.
