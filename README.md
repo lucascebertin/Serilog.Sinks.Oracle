@@ -3,6 +3,9 @@
 This project is a port from [Serilog.Sinks.MSSqlServerCore].
 It's a netstandard2 library to provide a clean way to send Serilog events to Oracle 11 (annd possible 12 too).
 
+[![Linux Build][travis-image]][travis-url]
+[![Windows Build][appveyor-image]][appveyor-url]
+
 ## Gettins started
 
 ### Prerequisites
@@ -55,3 +58,9 @@ END;
 
 ## IMPORTANT NOTES!
 This repository and package are in early stages, so, use it on your own and risk but feel free to contribute opening issues or sending pull-requests!
+
+[travis-image]: https://img.shields.io/travis/lucascebertin/Serilog.Sinks.Oracle/master.svg?label=linux
+[travis-url]: https://travis-ci.org/lucascebertin/Serilog.Sinks.Oracle
+
+[appveyor-image]: https://ci.appveyor.com/api/projects/status/g7tw6rhtysx8t3w5?svg=true
+[appveyor-url]: https://ci.appveyor.com/project/lcssk8board/serilog-sinks-oracle

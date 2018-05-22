@@ -22,7 +22,7 @@ namespace Serilog.Sinks.Oracle.UnitTests
         {
             var dataTable = new DataTable();
             var insertStatementExpected =
-                $"INSERT ALL \r\n  INTO {TableName} (\"{ColumnName}\") VALUES (:{ColumnName}_0)\r\nSELECT * FROM dual\r\n";
+                $"INSERT ALL {Environment.NewLine}  INTO {TableName} (\"{ColumnName}\") VALUES (:{ColumnName}_0){Environment.NewLine}SELECT * FROM dual{Environment.NewLine}";
 
             dataTable.Columns.Add(ColumnName, typeof(string));
             dataTable.Rows.Add("data");
@@ -38,7 +38,7 @@ namespace Serilog.Sinks.Oracle.UnitTests
         {
             var dataTable = new DataTable();
             var insertStatementExpected =
-                $"INSERT ALL \r\n  INTO {TableName} (\"{ColumnName}\") VALUES (:{ColumnName}_0)\r\n  INTO {TableName} (\"{ColumnName}\") VALUES (:{ColumnName}_1)\r\nSELECT * FROM dual\r\n";
+                $"INSERT ALL {Environment.NewLine}  INTO {TableName} (\"{ColumnName}\") VALUES (:{ColumnName}_0){Environment.NewLine}  INTO {TableName} (\"{ColumnName}\") VALUES (:{ColumnName}_1){Environment.NewLine}SELECT * FROM dual{Environment.NewLine}";
 
             dataTable.Columns.Add(ColumnName, typeof(string));
             dataTable.Rows.Add("data");
@@ -89,7 +89,7 @@ namespace Serilog.Sinks.Oracle.UnitTests
             var (insert, _) = database.CreateInsertData(defaultDataTable);
 
             var insertStatementExpected =
-                $"INSERT ALL \r\n  INTO {TableName} ({columns}) VALUES (seq, {parameters})\r\nSELECT * FROM dual\r\n";
+                $"INSERT ALL {Environment.NewLine}  INTO {TableName} ({columns}) VALUES (seq, {parameters}){Environment.NewLine}SELECT * FROM dual{Environment.NewLine}";
 
             insert.Should().BeEquivalentTo(insertStatementExpected);
         }
@@ -126,7 +126,7 @@ namespace Serilog.Sinks.Oracle.UnitTests
             var (insert, _) = database.CreateInsertData(defaultDataTable);
 
             var insertStatementExpected =
-                $"INSERT ALL \r\n  INTO {TableName} ({columns}) VALUES (seq, {parameters})\r\nSELECT * FROM dual\r\n";
+                $"INSERT ALL {Environment.NewLine}  INTO {TableName} ({columns}) VALUES (seq, {parameters}){Environment.NewLine}SELECT * FROM dual{Environment.NewLine}";
 
             insert.Should().BeEquivalentTo(insertStatementExpected);
         }
