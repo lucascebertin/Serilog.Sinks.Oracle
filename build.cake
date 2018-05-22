@@ -46,7 +46,7 @@ Task("Restore")
 Task("Test")
     .Does(() =>
     {
-        var projects = GetFiles("./test/**/*.csproj");
+        var projects = GetFiles("./src/Serilog.Sinks.Oracle/*Test*/*.csproj");
         foreach(var project in projects)
         {
             Information("Testing project " + project);
