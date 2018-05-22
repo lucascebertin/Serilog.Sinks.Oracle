@@ -4,17 +4,23 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Serilog.Sinks.Oracle.UnitTests
 {
     public class DatabaseTests
     {
+        private readonly ITestOutputHelper _output;
         private const string ConnectionString = "";
         private const string TableName = "myTableName";
         private const string ColumnName = "myColumnName";
         private const string FunctionName = "myFunction";
         private readonly ColumnOptions _columnOptions = new ColumnOptions();
+
+        public DatabaseTests(ITestOutputHelper output) => 
+            _output = output;
 
         [Fact]
         public void Should_return_only_one_valid_insert_statement_when_added_only_one_row()
@@ -32,6 +38,8 @@ SELECT * FROM dual
             var database = new Database(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
             var (insertData, _) = database.CreateInsertData(dataTable);
 
+            _output.WriteLine(Convert.ToBase64String(Encoding.UTF8.GetBytes(insertStatementExpected)));
+            _output.WriteLine(Convert.ToBase64String(Encoding.UTF8.GetBytes(insertData)));
             insertData.Should().BeEquivalentTo(insertStatementExpected);
         }
 
