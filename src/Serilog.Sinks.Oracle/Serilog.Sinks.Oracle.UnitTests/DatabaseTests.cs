@@ -4,33 +4,25 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Serilog.Sinks.Oracle.UnitTests
 {
     public class DatabaseTests
     {
-        private readonly ITestOutputHelper _output;
+        //private readonly ITestOutputHelper _output;
         private const string ConnectionString = "";
         private const string TableName = "myTableName";
         private const string ColumnName = "myColumnName";
         private const string FunctionName = "myFunction";
         private readonly ColumnOptions _columnOptions = new ColumnOptions();
 
-        public DatabaseTests(ITestOutputHelper output) => 
-            _output = output;
-
         [Fact]
         public void Should_return_only_one_valid_insert_statement_when_added_only_one_row()
         {
             var dataTable = new DataTable();
             var insertStatementExpected =
-$@"INSERT ALL 
-  INTO {TableName} (""{ColumnName}"") VALUES (:{ColumnName}_0)
-SELECT * FROM dual
-";
+                $"INSERT ALL \r\n  INTO {TableName} (\"{ColumnName}\") VALUES (:{ColumnName}_0)\r\nSELECT * FROM dual\r\n";
 
             dataTable.Columns.Add(ColumnName, typeof(string));
             dataTable.Rows.Add("data");
@@ -38,8 +30,6 @@ SELECT * FROM dual
             var database = new Database(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
             var (insertData, _) = database.CreateInsertData(dataTable);
 
-            _output.WriteLine(Convert.ToBase64String(Encoding.UTF8.GetBytes(insertStatementExpected)));
-            _output.WriteLine(Convert.ToBase64String(Encoding.UTF8.GetBytes(insertData)));
             insertData.Should().BeEquivalentTo(insertStatementExpected);
         }
 
@@ -48,12 +38,7 @@ SELECT * FROM dual
         {
             var dataTable = new DataTable();
             var insertStatementExpected =
-$@"INSERT ALL 
-  INTO {TableName} (""{ColumnName}"") VALUES (:{ColumnName}_0)
-  INTO {TableName} (""{ColumnName}"") VALUES (:{ColumnName}_1)
-SELECT * FROM dual
-";
-
+                $"INSERT ALL \r\n  INTO {TableName} (\"{ColumnName}\") VALUES (:{ColumnName}_0)\r\n  INTO {TableName} (\"{ColumnName}\") VALUES (:{ColumnName}_1)\r\nSELECT * FROM dual\r\n";
 
             dataTable.Columns.Add(ColumnName, typeof(string));
             dataTable.Rows.Add("data");
@@ -104,10 +89,7 @@ SELECT * FROM dual
             var (insert, _) = database.CreateInsertData(defaultDataTable);
 
             var insertStatementExpected =
-$@"INSERT ALL 
-  INTO {TableName} ({columns}) VALUES (seq, {parameters})
-SELECT * FROM dual
-";
+                $"INSERT ALL \r\n  INTO {TableName} ({columns}) VALUES (seq, {parameters})\r\nSELECT * FROM dual\r\n";
 
             insert.Should().BeEquivalentTo(insertStatementExpected);
         }
@@ -144,10 +126,7 @@ SELECT * FROM dual
             var (insert, _) = database.CreateInsertData(defaultDataTable);
 
             var insertStatementExpected =
-$@"INSERT ALL 
-  INTO {TableName} ({columns}) VALUES (seq, {parameters})
-SELECT * FROM dual
-";
+                $"INSERT ALL \r\n  INTO {TableName} ({columns}) VALUES (seq, {parameters})\r\nSELECT * FROM dual\r\n";
 
             insert.Should().BeEquivalentTo(insertStatementExpected);
         }
