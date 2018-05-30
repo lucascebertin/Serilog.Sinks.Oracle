@@ -26,7 +26,7 @@ namespace Serilog
         )
         {
             if (loggerConfiguration == null)
-                throw new ArgumentNullException("loggerConfiguration");
+                throw new ArgumentNullException(nameof(loggerConfiguration));
 
             var defaultedPeriod = period ?? OracleSink.DefaultPeriod;
 
