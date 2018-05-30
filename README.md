@@ -1,7 +1,7 @@
 # Serilog.Sinks.Oracle
 
 This project is a port from [Serilog.Sinks.MSSqlServerCore].
-It's a netstandard2 library to provide a clean way to send Serilog events to Oracle 11 (annd possible 12 too).
+It's a netstandard2 library to provide a clean way to send Serilog events to Oracle 11 (and possible 12 too).
 
 [![Linux Build][travis-image]][travis-url]
 [![Windows Build][appveyor-image]][appveyor-url]
