@@ -34,6 +34,28 @@ CREATE TABLE YOUR_TABLE_SPACE.LOG(
 
 CREATE SEQUENCE YOUR_TABLE_SPACE.LOG_SEQUENCE START WITH 1 INCREMENT BY 1;
 
+-- YOU CAN CHOOSE TO USE FUNCTION OR CREATE A TRIGGER... I PREFER THE TRIGGER WAY :) 
+-- TRIGGER
+CREATE TRIGGER 
+	YOUR_TABLE_SPACE.LOG_TRIGGER 
+BEFORE INSERT ON 
+	YOUR_TABLE_SPACE.LOG 
+REFERENCING 
+	NEW AS NEW 
+	OLD AS old 
+FOR EACH ROW 
+BEGIN 
+	IF :new."Id" IS NULL THEN 
+		SELECT 
+			YOUR_TABLE_SPACE.LOG_SEQUENCE.NEXTVAL 
+		INTO 
+			:new."Id" 
+		FROM dual; 
+	END IF; 
+END;
+
+
+-- OR FUNCTION
 CREATE FUNCTION YOUR_TABLE_SPACE.get_seq RETURN INT IS
 BEGIN
   RETURN YOUR_TABLE_SPACE.LOG_SEQUENCE.NEXTVAL;
@@ -47,6 +69,7 @@ END;
   var connectionString =
       "user id=system;password=oracle;data source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL = TCP)(HOST = localhost)(PORT = 49161)))(CONNECT_DATA=(SERVICE_NAME = xe)))";
 
+  // If you choose to use the trigger just pass string.Empty in function name argument (tableSpaceAndFunctionName)
   var logger = new LoggerConfiguration()
       .MinimumLevel.Debug()
       .WriteTo.Oracle(connectionString, "YOUR_TABLE_SPACE.YOUR_TABLE_NAME", "YOUR_TABLE_SPACE.get_seq", LogEventLevel.Debug, 10, TimeSpan.FromSeconds(2))
