@@ -5,7 +5,7 @@
 
     <IsPackable>false</IsPackable>
 
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Serilog.Sinks.OracleStd\Serilog.Sinks.OracleStd.csproj" />
+    <ProjectReference Include="..\Serilog.Sinks.OracleNetStandard20\Serilog.Sinks.OracleNetStandard20.csproj" />
   </ItemGroup>
 
 </Project>

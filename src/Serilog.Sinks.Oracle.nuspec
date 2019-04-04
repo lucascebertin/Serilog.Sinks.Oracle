@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Serilog.Sinks.Oracle</id>
+    <version>1.0.6</version>
+    <title>Sink for Serilog, flushes logs on Oracle</title>
+    <authors>lucascebertin, driekus77</authors>
+    <owners>lucascebertin</owners>
+    <license>MIT license see https://github.com/driekus77/Serilog.Sinks.Oracle/blob/master/LICENSE</license>
+    <projectUrl>https://github.com/lucascebertin/Serilog.Sinks.Oracle</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>This project is a port from [Serilog.Sinks.MSSqlServerCore]. It's a netstandard2 library to provide a clean way to send Serilog events to Oracle 11 (and possible 12 too).</description>
+    <releaseNotes>Supporting multiple platforms(MISL, x86, x64) and frameworks(.NET4.5.2,.NET4.6.1,.NETStandard2.0, and .NETCore2.1) </releaseNotes>
+    <copyright>Copyright 2019</copyright>
+    <tags>Serilog Sinks Oracle</tags>
+  </metadata>
+</package>

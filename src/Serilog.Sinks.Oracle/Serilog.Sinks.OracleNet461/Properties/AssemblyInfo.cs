@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Serilog.Sinks.OracleFrw")]
+[assembly: AssemblyTitle("Serilog.Sinks.OracleNet461")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Serilog.Sinks.OracleFrw")]
+[assembly: AssemblyProduct("Serilog.Sinks.OracleNet461")]
 [assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("9d84b2dc-32cf-45d2-9f3f-6d05813c054d")]
+[assembly: Guid("40b9b739-42c0-4c20-bcab-b64577c349a6")]
 
 // Version information for an assembly consists of the following four values:
 //
