@@ -11,10 +11,19 @@
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
 
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.0.3</Version>
+    <Version>1.0.5</Version>
+    <AssemblyName>Serilog.Sinks.OracleStd</AssemblyName>
+    <RootNamespace>Serilog.Sinks.Oracle</RootNamespace>
+    <Platforms>AnyCPU;x64</Platforms>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Cake" Version="0.33.0" />
     <PackageReference Include="FakeItEasy" Version="4.5.1" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.18.3" />
     <PackageReference Include="Serilog" Version="2.7.1-dev-00980" />

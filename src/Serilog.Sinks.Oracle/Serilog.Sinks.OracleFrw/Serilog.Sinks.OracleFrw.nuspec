@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>1.0.3</version>
+    <title>Serilog.Sinks.OracleFrw64</title>
+    <authors>lucascebertin(Original), driekus77(Porter)</authors>
+    <owners>driekus77</owners>
+    <licenseUrl>https://github.com/driekus77/Serilog.Sinks.Oracle/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/driekus77/Serilog.Sinks.Oracle</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>64 bits (back)port of Serilog.Sinks.Oracle supporting Framework 4.5.2+</description>
+    <releaseNotes>Initial port.</releaseNotes>
+    <copyright>Copyright 2019</copyright>
+    <tags>Serilog Sinks Oracle</tags>
+  </metadata>
+</package>

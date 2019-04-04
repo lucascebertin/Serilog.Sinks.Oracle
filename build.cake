@@ -80,7 +80,7 @@ Task("Package-NuGet")
     .Description("Generates NuGet packages for each project")
     .Does(() =>
     {
-        foreach(var project in GetFiles("./src/Serilog.Sinks.Oracle/Serilog.Sinks.Oracle/*.csproj"))
+        foreach(var project in GetFiles("./src/Serilog.Sinks.Oracle/Serilog.Sinks.OracleFrw/*.csproj"))
         {
             Information("Packaging " + project.GetFilename().FullPath);
 
@@ -125,7 +125,7 @@ Task("Update-Version")
             throw new CakeException("No version specified! You need to pass in --targetversion=\"x.y.z\"");
 
         var file =
-            MakeAbsolute(File("./src/Serilog.Sinks.Oracle/Serilog.Sinks.Oracle/Serilog.Sinks.Oracle.csproj"));
+            MakeAbsolute(File("./src/Serilog.Sinks.Oracle/Serilog.Sinks.OracleStd/Serilog.Sinks.OracleStd.csproj"));
 
         Information(file.FullPath);
 
