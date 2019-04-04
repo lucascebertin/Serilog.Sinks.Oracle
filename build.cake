@@ -26,21 +26,13 @@ Task("Clean")
 Task("Restore")
     .Does(() =>
     {
-        DotNetCoreRestore(solutionPath);
+		NuGetRestore(solutionPath);
     });
 
 // Build using the build configuration specified as an argument.
  Task("Build")
     .Does(() =>
     {
-		MSBuild(solutionPath, new MSBuildSettings {
-				Verbosity = Verbosity.Minimal,
-				ToolVersion = MSBuildToolVersion.VS2017,
-				Restore = true,
-				Configuration = configuration,
-				PlatformTarget = PlatformTarget.MSIL
-				});
-
 		MSBuild(solutionPath, new MSBuildSettings {
 				Verbosity = Verbosity.Minimal,
 				ToolVersion = MSBuildToolVersion.VS2017,
