@@ -6,7 +6,7 @@ var target = Argument("Target", "Default");
 var configuration = Argument("Configuration", "Release");
 var source = Argument("source", "https://api.nuget.org/v3/index.json");
 var apiKey = Argument<string>("apikey", null);
-var version = Argument("version", "1.0.7");
+var version = Argument("version", "1.0.6");
 
 Information($"Running target {target} in configuration {configuration}");
 
@@ -26,6 +26,11 @@ Task("Clean")
 Task("Restore")
     .Does(() =>
     {
+		 if ( !DirectoryExists(nuget) )
+		 {
+			CreateDirectory(nuget);
+		 }
+
 		NuGetRestore(solutionPath);
     });
 
@@ -33,6 +38,15 @@ Task("Restore")
  Task("Build")
     .Does(() =>
     {
+		MSBuild(solutionPath, new MSBuildSettings {
+			Verbosity = Verbosity.Minimal,
+			ToolVersion = MSBuildToolVersion.VS2017,
+			Restore = true,
+			Configuration = configuration,
+			PlatformTarget = PlatformTarget.MSIL
+			});
+
+
 		MSBuild(solutionPath, new MSBuildSettings {
 				Verbosity = Verbosity.Minimal,
 				ToolVersion = MSBuildToolVersion.VS2017,
@@ -64,7 +78,7 @@ Task("Restore")
 Task("Test")
     .Does(() =>
     {
-        var projects = GetFiles("./src/Serilog.Sinks.Oracle/*StdUnitTest*/*.csproj");
+        var projects = GetFiles("./src/Serilog.Sinks.Oracle/*UnitTests/*.csproj");
         foreach(var project in projects)
         {
             Information("Testing project " + project);
@@ -83,14 +97,115 @@ Task("Test")
 Task("Publish")
     .Does(() =>
     {
-        DotNetCorePublish(
-            solutionPath,
-            new DotNetCorePublishSettings()
-            {
-                Configuration = configuration,
-                OutputDirectory = build,
-                ArgumentCustomization = args => args.Append("--no-restore"),
-            });
+		// Note: Not publishing the UnitTest(s) projects!
+
+		 Func<IFileSystemInfo, bool> exclude_node_modules =
+									fileSystemInfo => !fileSystemInfo.Path.FullPath.Contains("UnitTest");
+
+		 var projects = GetFiles("./src/Serilog.Sinks.Oracle/Serilog.Sinks.Oracle/*.csproj", exclude_node_modules);
+		 foreach(var project in projects)
+		 {
+			 Information("Publishing project: {0}", project);
+
+
+			 // .NET 4.5.2
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "net452",
+					Runtime = "win-x86",
+					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/net452",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "net452",
+					Runtime = "win-x64",
+					OutputDirectory = build.ToString() + "/runtimes/win-x64/lib/net452",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
+
+
+			// .NET 4.6.1
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "net461",
+					Runtime = "win-x86",
+					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/net461",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "net461",
+					Runtime = "win-x64",
+					OutputDirectory = build.ToString() + "/runtimes/win-x64/lib/net461",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
+
+			// .NET Standard 2.0
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "netstandard2.0",
+					Runtime = "win-x86",
+					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/netstandard2.0",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "netstandard2.0",
+					Runtime = "win-x64",
+					OutputDirectory = build.ToString() + "/runtimes/win-x64/lib/netstandard2.0",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
+
+			// .NET Core 2.1
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "netcoreapp2.1",
+					Runtime = "win-x86",
+					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/netcore2.1",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "netcoreapp2.1",
+					Runtime = "win-x64",
+					OutputDirectory = build.ToString() + "/runtimes/win-x64/lib/netcore2.1",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
+
+			}
     });
 
 Task("Package-NuGet")
@@ -111,45 +226,52 @@ Task("Package-NuGet")
                                      Symbols                 = false,
                                      NoPackageAnalysis       = true,
                                      Files                   = new [] {
-                                                                          new NuSpecContent {Source = "src/Serilog.Sinks.Oracle/Serilog.Sinks.OracleNet452/bin/x86/Release/Serilog.Sinks.Oracle.*", Target = "runtimes/win10-x86/lib/net452"},
-                                                                          new NuSpecContent {Source = "src/Serilog.Sinks.Oracle/Serilog.Sinks.OracleNet452/bin/x64/Release/Serilog.Sinks.Oracle.*", Target = "runtimes/win10-x64/lib/net452"},
+											// .NETFramework4.5.2
+                                            new NuSpecContent {Source = "runtimes/win-x86/lib/net452/**", Target = "."},
+                                            new NuSpecContent {Source = "runtimes/win-x64/lib/net452/**", Target = "."},
 
-                                                                          new NuSpecContent {Source = "src/Serilog.Sinks.Oracle/Serilog.Sinks.OracleNet461/bin/x86/Release/Serilog.Sinks.Oracle.*", Target = "runtimes/win10-x86/lib/net461"},
-                                                                          new NuSpecContent {Source = "src/Serilog.Sinks.Oracle/Serilog.Sinks.OracleNet461/bin/x64/Release/Serilog.Sinks.Oracle.*", Target = "runtimes/win10-x64/lib/net461"},
+											// .NETFramework4.6.1
+                                            new NuSpecContent {Source = "runtimes/win-x86/lib/net461/**", Target = "."},
+                                            new NuSpecContent {Source = "runtimes/win-x64/lib/net461/**", Target = "."},
 
-                                                                          new NuSpecContent {Source = "src/Serilog.Sinks.Oracle/Serilog.Sinks.OracleNetStandard20/bin/x86/Release/netstandard2.0/Serilog.Sinks.Oracle.*", Target = "runtimes/win10-x86/lib/netstandard2.0"},
-                                                                          new NuSpecContent {Source = "src/Serilog.Sinks.Oracle/Serilog.Sinks.OracleNetStandard20/bin/x64/Release/netstandard2.0/Serilog.Sinks.Oracle.*", Target = "runtimes/win10-x64/lib/netstandard2.0"},
+											// .NETStandard2.0
+                                            new NuSpecContent {Source = "runtimes/win-x86/lib/netstandard2.0/**", Target = "."},
+                                            new NuSpecContent {Source = "runtimes/win-x64/lib/netstandard2.0/**", Target = "."},
                                                                        
-                                                                          new NuSpecContent {Source = "src/Serilog.Sinks.Oracle/Serilog.Sinks.OracleNetCore21/bin/x86/Release/netcoreapp2.1/Serilog.Sinks.Oracle.*", Target = "runtimes/win10-x86/lib/netcore2.1"},
-                                                                          new NuSpecContent {Source = "src/Serilog.Sinks.Oracle/Serilog.Sinks.OracleNetCore21/bin/x64/Release/netcoreapp2.1/Serilog.Sinks.Oracle.*", Target = "runtimes/win10-x64/lib/netcore2.1"},
-																	   },
-									 Dependencies			 = new [] {
-																		  new NuSpecDependency {Id = "Serilog", TargetFramework=".NETFramework4.5.2", Version="2.8.0"},
-																		  new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETFramework4.5.2", Version="2.1.1"},
-																		  new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETFramework4.5.2", Version="5.1.0"},
-																		  new NuSpecDependency {Id = "Oracle.ManagedDataAccess", TargetFramework=".NETFramework4.5.2", Version="18.6.0"},
-																		  new NuSpecDependency {Id = "System.ValueTuple", TargetFramework=".NETFramework4.5.2", Version="4.5.0"},
-																		  
-																		  
-																		  new NuSpecDependency {Id = "Serilog", TargetFramework=".NETFramework4.6.1", Version="2.8.0"},
-																		  new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETFramework4.6.1", Version="2.1.1"},
-																		  new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETFramework4.6.1", Version="5.1.0"},
-																		  new NuSpecDependency {Id = "Oracle.ManagedDataAccess", TargetFramework=".NETFramework4.6.1", Version="18.6.0"},
-																		  new NuSpecDependency {Id = "System.ValueTuple", TargetFramework=".NETFramework4.6.1", Version="4.5.0"},
+											// .NETCore 2.1
+                                            new NuSpecContent {Source = "runtimes/win-x86/lib/netcore2.1/**", Target = "."},
+                                            new NuSpecContent {Source = "runtimes/win-x64/lib/netcore2.1/**", Target = "."},
+																	   },	
+									Dependencies			 = new [] {
+											// .NETFramework4.5.2
+											new NuSpecDependency {Id = "Serilog", TargetFramework=".NETFramework4.5.2", Version="2.8.0"},
+											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETFramework4.5.2", Version="2.1.1"},
+											new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETFramework4.5.2", Version="5.1.0"},
+											new NuSpecDependency {Id = "Oracle.ManagedDataAccess", TargetFramework=".NETFramework4.5.2", Version="18.6.0"},
+											new NuSpecDependency {Id = "System.ValueTuple", TargetFramework=".NETFramework4.5.2", Version="4.5.0"},
 
-																		  new NuSpecDependency {Id = "Serilog", TargetFramework=".NETStandard2.0", Version="2.8.0"},
-																		  new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETStandard2.0", Version="2.1.1"},
-																		  new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETStandard2.0", Version="5.1.0"},
-																		  new NuSpecDependency {Id = "Oracle.ManagedDataAccess.Core", TargetFramework=".NETStandard2.0", Version="2.18.6"},
-																		  new NuSpecDependency {Id = "NETStandard.Library", TargetFramework=".NETStandard2.0", Version="2.0.3"},
+											// .NETFramework4.6.1
+											new NuSpecDependency {Id = "Serilog", TargetFramework=".NETFramework4.6.1", Version="2.8.0"},
+											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETFramework4.6.1", Version="2.1.1"},
+											new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETFramework4.6.1", Version="5.1.0"},
+											new NuSpecDependency {Id = "Oracle.ManagedDataAccess", TargetFramework=".NETFramework4.6.1", Version="18.6.0"},
+											new NuSpecDependency {Id = "System.ValueTuple", TargetFramework=".NETFramework4.6.1", Version="4.5.0"},
 
-																		  new NuSpecDependency {Id = "Serilog", TargetFramework=".NETCore2.1", Version="2.8.0"},
-																		  new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETCore2.1", Version="2.1.1"},
-																		  new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETCore2.1", Version="5.1.0"},
-																		  new NuSpecDependency {Id = "Oracle.ManagedDataAccess.Core", TargetFramework=".NETCore2.1", Version="2.18.6"},
-																		  new NuSpecDependency {Id = "Microsoft.NETCore.App", TargetFramework=".NETCore2.1", Version="2.1.0"}
-																	  },	
-                                     BasePath                = ".",
+											// .NETStandard2.0
+											new NuSpecDependency {Id = "Serilog", TargetFramework=".NETStandard2.0", Version="2.8.0"},
+											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETStandard2.0", Version="2.1.1"},
+											new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETStandard2.0", Version="5.1.0"},
+											new NuSpecDependency {Id = "Oracle.ManagedDataAccess.Core", TargetFramework=".NETStandard2.0", Version="2.18.6"},
+											new NuSpecDependency {Id = "NETStandard.Library", TargetFramework=".NETStandard2.0", Version="2.0.3"},
+
+											// .NETCore 2.1
+											new NuSpecDependency {Id = "Serilog", TargetFramework=".NETCore2.1", Version="2.8.0"},
+											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETCore2.1", Version="2.1.1"},
+											new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETCore2.1", Version="5.1.0"},
+											new NuSpecDependency {Id = "Oracle.ManagedDataAccess.Core", TargetFramework=".NETCore2.1", Version="2.18.6"},
+											new NuSpecDependency {Id = "Microsoft.NETCore.App", TargetFramework=".NETCore2.1", Version="2.1.0"}
+										},
+                                     BasePath                = build,
                                      OutputDirectory         = nuget
                                  };
 
@@ -195,14 +317,11 @@ Task("Update-Version")
     .IsDependentOn("Build")
     .Does(() =>
     {
-        Information("U should set the version of all projects to " + version);
-		
-		/*
         if(string.IsNullOrWhiteSpace(version))
             throw new CakeException("No version specified! You need to pass in --targetversion=\"x.y.z\"");
 
         var file =
-            MakeAbsolute(File("./src/Serilog.Sinks.Oracle/Serilog.Sinks.OracleStd/Serilog.Sinks.OracleStd.csproj"));
+            MakeAbsolute(File("./src/Serilog.Sinks.Oracle/Serilog.Sinks.Oracle/Serilog.Sinks.Oracle.csproj"));
 
         Information(file.FullPath);
 
@@ -216,7 +335,6 @@ Task("Update-Version")
             projectVersion.Replace(project, string.Concat("<Version>", version, "</Version>"));
 
         System.IO.File.WriteAllText(file.FullPath, project, Encoding.UTF8);
-		*/
     });
 
 // A meta-task that runs all the steps to Build and Test the app
