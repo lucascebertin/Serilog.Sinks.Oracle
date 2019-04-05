@@ -49,16 +49,8 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
-    <ProjectReference Include="..\Serilog.Sinks.Oracle\Serilog.Sinks.Oracle.csproj" >
+    <ProjectReference Include="..\Serilog.Sinks.Oracle\Serilog.Sinks.Oracle.csproj">
     </ProjectReference>      
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="test.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>test.settings</DependentUpon>
-    </Compile>
   </ItemGroup>
 
   <ItemGroup>

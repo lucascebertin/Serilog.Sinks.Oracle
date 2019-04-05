@@ -26,26 +26,26 @@ Task("Clean")
 Task("Restore")
     .Does(() =>
     {
-		 if ( !DirectoryExists(nuget) )
-		 {
+		if ( !DirectoryExists(nuget) )
+		{
 			CreateDirectory(nuget);
-		 }
+		}
 
 		NuGetRestore(solutionPath);
     });
 
 // Build using the build configuration specified as an argument.
  Task("Build")
+    .IsDependentOn("Update-Version")
     .Does(() =>
     {
 		MSBuild(solutionPath, new MSBuildSettings {
-			Verbosity = Verbosity.Minimal,
-			ToolVersion = MSBuildToolVersion.VS2017,
-			Restore = true,
-			Configuration = configuration,
-			PlatformTarget = PlatformTarget.MSIL
+				Verbosity = Verbosity.Minimal,
+				ToolVersion = MSBuildToolVersion.VS2017,
+				Restore = true,
+				Configuration = configuration,
+				PlatformTarget = PlatformTarget.MSIL
 			});
-
 
 		MSBuild(solutionPath, new MSBuildSettings {
 				Verbosity = Verbosity.Minimal,
@@ -62,15 +62,6 @@ Task("Restore")
 				Configuration = configuration,
 				PlatformTarget = PlatformTarget.x64
 				});
-
-		
-
-//        DotNetCoreBuild(solutionPath,
-//            new DotNetCoreBuildSettings()
-//            {
-//                Configuration = configuration,
-//                ArgumentCustomization = args => args.Append("--no-restore"),
-//            });
     });
 
 // Look under a 'Tests' folder and run dotnet test against all of those projects.
@@ -95,10 +86,10 @@ Task("Test")
 
 // Publish the app to the /dist folder
 Task("Publish")
+    .IsDependentOn("Build")
     .Does(() =>
     {
 		// Note: Not publishing the UnitTest(s) projects!
-
 		 Func<IFileSystemInfo, bool> exclude_node_modules =
 									fileSystemInfo => !fileSystemInfo.Path.FullPath.Contains("UnitTest");
 
@@ -107,8 +98,17 @@ Task("Publish")
 		 {
 			 Information("Publishing project: {0}", project);
 
-
 			 // .NET 4.5.2
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "net452",
+					OutputDirectory = build.ToString() + "/lib/net452",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
 			DotNetCorePublish(
 				project.FullPath,
 				new DotNetCorePublishSettings()
@@ -132,8 +132,17 @@ Task("Publish")
 				});
 
 
-
 			// .NET 4.6.1
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "net461",
+					OutputDirectory = build.ToString() + "/lib/net461",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
 			DotNetCorePublish(
 				project.FullPath,
 				new DotNetCorePublishSettings()
@@ -164,6 +173,16 @@ Task("Publish")
 				{
 					Configuration = configuration,
 					Framework = "netstandard2.0",
+					OutputDirectory = build.ToString() + "/lib/netstandard2.0",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "netstandard2.0",
 					Runtime = "win-x86",
 					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/netstandard2.0",
 					ArgumentCustomization = args => args.Append("--no-restore"),
@@ -188,6 +207,16 @@ Task("Publish")
 				{
 					Configuration = configuration,
 					Framework = "netcoreapp2.1",
+					OutputDirectory = build.ToString() + "/lib/netcore2.1",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
+
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "netcoreapp2.1",
 					Runtime = "win-x86",
 					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/netcore2.1",
 					ArgumentCustomization = args => args.Append("--no-restore"),
@@ -203,13 +232,11 @@ Task("Publish")
 					OutputDirectory = build.ToString() + "/runtimes/win-x64/lib/netcore2.1",
 					ArgumentCustomization = args => args.Append("--no-restore"),
 				});
-
-
 			}
     });
 
 Task("Package-NuGet")
-    .IsDependentOn("Update-Version")
+    .IsDependentOn("Publish")
     .Description("Generates NuGet packages for each project")
     .Does(() =>
     {
@@ -226,21 +253,7 @@ Task("Package-NuGet")
                                      Symbols                 = false,
                                      NoPackageAnalysis       = true,
                                      Files                   = new [] {
-											// .NETFramework4.5.2
-                                            new NuSpecContent {Source = "runtimes/win-x86/lib/net452/**", Target = "."},
-                                            new NuSpecContent {Source = "runtimes/win-x64/lib/net452/**", Target = "."},
-
-											// .NETFramework4.6.1
-                                            new NuSpecContent {Source = "runtimes/win-x86/lib/net461/**", Target = "."},
-                                            new NuSpecContent {Source = "runtimes/win-x64/lib/net461/**", Target = "."},
-
-											// .NETStandard2.0
-                                            new NuSpecContent {Source = "runtimes/win-x86/lib/netstandard2.0/**", Target = "."},
-                                            new NuSpecContent {Source = "runtimes/win-x64/lib/netstandard2.0/**", Target = "."},
-                                                                       
-											// .NETCore 2.1
-                                            new NuSpecContent {Source = "runtimes/win-x86/lib/netcore2.1/**", Target = "."},
-                                            new NuSpecContent {Source = "runtimes/win-x64/lib/netcore2.1/**", Target = "."},
+                                            new NuSpecContent {Source = "**", Target = "."},
 																	   },	
 									Dependencies			 = new [] {
 											// .NETFramework4.5.2
@@ -277,19 +290,6 @@ Task("Package-NuGet")
 
 			NuGetPack("Serilog.Sinks.Oracle.nuspec", nuGetPackSettings);
 
-
-//        foreach(var project in GetFiles("./src/Serilog.Sinks.Oracle/Serilog.Sinks.Oracle*/*.csproj"))
-//        {
-//            Information("Packaging " + project.GetFilename().FullPath);
-
-//            var content =
-//                System.IO.File.ReadAllText(project.FullPath, Encoding.UTF8);
-
-//			DotNetCorePack(project.GetDirectory().FullPath, new DotNetCorePackSettings {
-//                Configuration = configuration,
-//                OutputDirectory = nuget
-//            });
-//        }
     });
 
 Task("Publish-NuGet")
@@ -314,7 +314,6 @@ Task("Publish-NuGet")
     });
 
 Task("Update-Version")
-    .IsDependentOn("Build")
     .Does(() =>
     {
         if(string.IsNullOrWhiteSpace(version))

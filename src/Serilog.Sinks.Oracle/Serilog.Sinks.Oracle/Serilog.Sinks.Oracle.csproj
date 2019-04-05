@@ -30,7 +30,6 @@
     <PackageReference Include="Serilog" Version="2.8.0" />
     <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.1.1" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
