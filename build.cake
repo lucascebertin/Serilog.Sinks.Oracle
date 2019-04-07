@@ -91,7 +91,7 @@ Task("Publish")
     {
 		// Note: Not publishing the UnitTest(s) projects!
 		 Func<IFileSystemInfo, bool> exclude_node_modules =
-									fileSystemInfo => !fileSystemInfo.Path.FullPath.Contains("UnitTest");
+									fileSystemInfo => !fileSystemInfo.Path.FullPath.Contains("Test");
 
 		 var projects = GetFiles("./src/Serilog.Sinks.Oracle/Serilog.Sinks.Oracle/*.csproj", exclude_node_modules);
 		 foreach(var project in projects)
@@ -207,7 +207,7 @@ Task("Publish")
 				{
 					Configuration = configuration,
 					Framework = "netcoreapp2.1",
-					OutputDirectory = build.ToString() + "/lib/netcore2.1",
+					OutputDirectory = build.ToString() + "/lib/netcoreapp2.1",
 					ArgumentCustomization = args => args.Append("--no-restore"),
 				});
 
@@ -218,7 +218,7 @@ Task("Publish")
 					Configuration = configuration,
 					Framework = "netcoreapp2.1",
 					Runtime = "win-x86",
-					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/netcore2.1",
+					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/netcoreapp2.1",
 					ArgumentCustomization = args => args.Append("--no-restore"),
 				});
 
@@ -229,7 +229,7 @@ Task("Publish")
 					Configuration = configuration,
 					Framework = "netcoreapp2.1",
 					Runtime = "win-x64",
-					OutputDirectory = build.ToString() + "/runtimes/win-x64/lib/netcore2.1",
+					OutputDirectory = build.ToString() + "/runtimes/win-x64/lib/netcoreapp2.1",
 					ArgumentCustomization = args => args.Append("--no-restore"),
 				});
 			}
@@ -257,32 +257,32 @@ Task("Package-NuGet")
 																	   },	
 									Dependencies			 = new [] {
 											// .NETFramework4.5.2
-											new NuSpecDependency {Id = "Serilog", TargetFramework=".NETFramework4.5.2", Version="2.8.0"},
-											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETFramework4.5.2", Version="2.1.1"},
-											new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETFramework4.5.2", Version="5.1.0"},
-											new NuSpecDependency {Id = "Oracle.ManagedDataAccess", TargetFramework=".NETFramework4.5.2", Version="18.6.0"},
-											new NuSpecDependency {Id = "System.ValueTuple", TargetFramework=".NETFramework4.5.2", Version="4.5.0"},
+											new NuSpecDependency {Id = "Serilog", TargetFramework="net452", Version="2.8.0"},
+											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework="net452", Version="2.1.1"},
+											new NuSpecDependency {Id = "FakeItEasy", TargetFramework="net452", Version="5.1.0"},
+											new NuSpecDependency {Id = "Oracle.ManagedDataAccess", TargetFramework="net452", Version="18.6.0"},
+											new NuSpecDependency {Id = "System.ValueTuple", TargetFramework="net452", Version="4.5.0"},
 
 											// .NETFramework4.6.1
-											new NuSpecDependency {Id = "Serilog", TargetFramework=".NETFramework4.6.1", Version="2.8.0"},
-											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETFramework4.6.1", Version="2.1.1"},
-											new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETFramework4.6.1", Version="5.1.0"},
-											new NuSpecDependency {Id = "Oracle.ManagedDataAccess", TargetFramework=".NETFramework4.6.1", Version="18.6.0"},
-											new NuSpecDependency {Id = "System.ValueTuple", TargetFramework=".NETFramework4.6.1", Version="4.5.0"},
+											new NuSpecDependency {Id = "Serilog", TargetFramework="net461", Version="2.8.0"},
+											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework="net461", Version="2.1.1"},
+											new NuSpecDependency {Id = "FakeItEasy", TargetFramework="net461", Version="5.1.0"},
+											new NuSpecDependency {Id = "Oracle.ManagedDataAccess", TargetFramework="net461", Version="18.6.0"},
+											new NuSpecDependency {Id = "System.ValueTuple", TargetFramework="net461", Version="4.5.0"},
 
 											// .NETStandard2.0
-											new NuSpecDependency {Id = "Serilog", TargetFramework=".NETStandard2.0", Version="2.8.0"},
-											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETStandard2.0", Version="2.1.1"},
-											new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETStandard2.0", Version="5.1.0"},
-											new NuSpecDependency {Id = "Oracle.ManagedDataAccess.Core", TargetFramework=".NETStandard2.0", Version="2.18.6"},
-											new NuSpecDependency {Id = "NETStandard.Library", TargetFramework=".NETStandard2.0", Version="2.0.3"},
+											new NuSpecDependency {Id = "Serilog", TargetFramework="netstandard2.0", Version="2.8.0"},
+											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework="netstandard2.0", Version="2.1.1"},
+											new NuSpecDependency {Id = "FakeItEasy", TargetFramework="netstandard2.0", Version="5.1.0"},
+											new NuSpecDependency {Id = "Oracle.ManagedDataAccess.Core", TargetFramework="netstandard2.0", Version="2.18.6"},
+											new NuSpecDependency {Id = "NETStandard.Library", TargetFramework="netstandard2.0", Version="2.0.3"},
 
 											// .NETCore 2.1
-											new NuSpecDependency {Id = "Serilog", TargetFramework=".NETCore2.1", Version="2.8.0"},
-											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework=".NETCore2.1", Version="2.1.1"},
-											new NuSpecDependency {Id = "FakeItEasy", TargetFramework=".NETCore2.1", Version="5.1.0"},
-											new NuSpecDependency {Id = "Oracle.ManagedDataAccess.Core", TargetFramework=".NETCore2.1", Version="2.18.6"},
-											new NuSpecDependency {Id = "Microsoft.NETCore.App", TargetFramework=".NETCore2.1", Version="2.1.0"}
+											new NuSpecDependency {Id = "Serilog", TargetFramework="netcoreapp2.1", Version="2.8.0"},
+											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework="netcoreapp2.1", Version="2.1.1"},
+											new NuSpecDependency {Id = "FakeItEasy", TargetFramework="netcoreapp2.1", Version="5.1.0"},
+											new NuSpecDependency {Id = "Oracle.ManagedDataAccess.Core", TargetFramework="netcoreapp2.1", Version="2.18.6"},
+											new NuSpecDependency {Id = "Microsoft.NETCore.App", TargetFramework="netcoreapp2.1", Version="2.1.0"}
 										},
                                      BasePath                = build,
                                      OutputDirectory         = nuget

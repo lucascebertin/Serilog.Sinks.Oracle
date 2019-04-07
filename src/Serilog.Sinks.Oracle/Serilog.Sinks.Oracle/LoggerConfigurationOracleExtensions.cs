@@ -1,4 +1,5 @@
 ﻿using Serilog.Configuration;
+using Serilog.Core;
 using Serilog.Events;
 using Serilog.Sinks.Oracle;
 using Serilog.Sinks.Oracle.Columns;
@@ -22,7 +23,9 @@ namespace Serilog
             TimeSpan? period = null,
             int queueLimit = 100,
             IFormatProvider formatProvider = null,
-            ColumnOptions columnOptions = null
+            ColumnOptions columnOptions = null,
+            bool bindArrays = false,
+            bool flushOnExit = false
         )
         {
             if (loggerConfiguration == null)
@@ -39,41 +42,14 @@ namespace Serilog
                     columnOptions,
                     tableSpaceAndTableName,
                     tableSpaceAndFunctionName,
-                    connectionString
+                    connectionString,
+                    bindArrays,
+                    flushOnExit
                 ),
                 restrictedToMinimumLevel
             );
         }
     }
 
-    public class OracleSink : PeriodicBatchingSink
-    {
-        public const int DefaultBatchPostingLimit = 50;
-        public static readonly TimeSpan DefaultPeriod = TimeSpan.FromSeconds(5);
-        private readonly HashSet<string> _additionalDataColumnNames;
-        private readonly Database _database;
 
-
-        public OracleSink(int batchSizeLimit, TimeSpan period, int queueLimit, IFormatProvider formatProvider,
-            ColumnOptions columnOptions, string tableSpaceAndTableName, string tableSpaceAndFunctionName, string connectionString)
-            : base(batchSizeLimit, period, queueLimit)
-        {
-            var receivedColumnOptions = columnOptions ?? new ColumnOptions();
-
-            if (receivedColumnOptions.AdditionalDataColumns != null)
-                _additionalDataColumnNames = new HashSet<string>(
-                    receivedColumnOptions.AdditionalDataColumns.Select(c => c.ColumnName),
-                    StringComparer.OrdinalIgnoreCase
-                );
-
-            _database = new Database(connectionString, tableSpaceAndTableName, tableSpaceAndFunctionName,
-                receivedColumnOptions, _additionalDataColumnNames, formatProvider);
-        }
-
-        protected override async Task EmitBatchAsync(IEnumerable<LogEvent> events) =>
-            await _database.StoreLogAsync(events);
-
-        protected override void EmitBatch(IEnumerable<LogEvent> events) =>
-            _database.StoreLog(events);
-    }
 }

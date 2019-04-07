@@ -5,7 +5,9 @@ using Serilog.Sinks.Oracle.Columns;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,8 +21,10 @@ namespace Serilog.Sinks.Oracle
         private readonly ColumnOptions _columnOptions;
         private readonly IFormatProvider _formatProvider;
         private readonly Properties _properties;
+        private readonly IList<ColumnInfo> _columnsInfo;
+        private readonly string _insertStatementForArrayBinding;
 
-        public Database(string connectionString, string tableSpaceAndTableName, string tableSpaceAndFunctionName,  ColumnOptions columnOptions,
+        public Database(string connectionString, string tableSpaceAndTableName, string tableSpaceAndFunctionName, ColumnOptions columnOptions,
             HashSet<string> additionalDataColumnNames, IFormatProvider formatProvider)
         {
             _connectionString = connectionString;
@@ -29,7 +33,79 @@ namespace Serilog.Sinks.Oracle
             _columnOptions = columnOptions;
             _formatProvider = formatProvider;
             _properties = new Properties(columnOptions, additionalDataColumnNames, _formatProvider);
+            _columnsInfo = GetColumnsInfo();
+            _insertStatementForArrayBinding = CreateInsertStatementForArrayBinding();
         }
+
+        private string CreateInsertStatementForArrayBinding()
+        {
+            // Create Insert statement
+            var commandString = new StringBuilder();
+            var cols = string.Join(", ", _columnsInfo.Select(x => $"\"{x.ColumnName}\""));
+            var values = string.Join(", ", _columnsInfo.Select(x => $":v_{x.ColumnName}"));
+            commandString.AppendLine($@"INSERT INTO {_tableSpaceAndTableName} ");
+            commandString.AppendLine($@"       ({cols}) ");
+            commandString.AppendLine($@"VALUES ({values}) ");
+
+            return commandString.ToString();
+        }
+
+        public (string, Dictionary<string, object>) CreateInsertArrayBindData(IEnumerable<LogEvent> events)
+        {
+            // Fill parameter values
+            var parameterDictionary = new Dictionary<string, object>();
+
+            foreach ( var ci in _columnsInfo)
+            {
+                object arrColData = null;
+                if (ci.StandardColumn == StandardColumn.Level)
+                {
+                    if (ci.Type == typeof(string))
+                    {
+                        arrColData = events.Select(s => s.Level.ToString()).ToArray();
+                    }
+                    else
+                    {
+                        arrColData = events.Select(s => (byte)s.Level).ToArray();
+                    }
+                }
+                else
+                if (ci.StandardColumn == StandardColumn.TimeStamp)
+                {
+                    arrColData = events.Select(s => _columnOptions.TimeStamp.ConvertToUtc ? s.Timestamp.DateTime.ToUniversalTime() : s.Timestamp.DateTime).ToArray();
+                }
+                else
+                if (ci.StandardColumn == StandardColumn.LogEvent)
+                {
+                    arrColData = events.Select(s => _properties.LogEventToJson(s)).ToArray();
+                }
+                else
+                if (ci.StandardColumn == StandardColumn.Exception)
+                {
+                    arrColData = events.Select(s => s.Exception?.ToString()).ToArray();
+                }
+                else
+                if (ci.StandardColumn == StandardColumn.Message)
+                {
+                    arrColData = events.Select(s => s.RenderMessage(_formatProvider)).ToArray();
+                }
+                else
+                if (ci.StandardColumn == StandardColumn.MessageTemplate)
+                {
+                    arrColData = events.Select(s => s.MessageTemplate.ToString()).ToArray();
+                }
+                else
+                if (ci.StandardColumn == StandardColumn.Properties)
+                {
+                    arrColData = events.Select(s => _properties.ConvertPropertiesToXmlStructure(s.Properties)).ToArray();
+                }
+
+                parameterDictionary.Add($"v_{ci.ColumnName}", arrColData);
+            }
+
+            return (_insertStatementForArrayBinding, parameterDictionary);
+        }
+
 
         public (string, Dictionary<string, object>) CreateInsertData(DataTable dataTable)
         {
@@ -64,6 +140,7 @@ namespace Serilog.Sinks.Oracle
             return (insertStatement, parameterDictionary);
         }
 
+
         public void PrepareCommand(OracleCommand command, IDictionary<string, object> parameterDictionary)
         {
             foreach (var key in parameterDictionary.Keys)
@@ -84,7 +161,7 @@ namespace Serilog.Sinks.Oracle
             }
         }
 
-        public async Task StoreLogAsync(IEnumerable<LogEvent> events)
+        public async Task StoreLogAsync(IEnumerable<LogEvent> events, bool bindArrays = false)
         {
             try
             {
@@ -92,13 +169,29 @@ namespace Serilog.Sinks.Oracle
                 {
                     await cn.OpenAsync().ConfigureAwait(false);
 
-                    var dataTable = FillDataTable(events);
-                    var (stringCommand, parameterDictionary) = CreateInsertData(dataTable);
-
-                    using (var command = new OracleCommand(stringCommand, cn))
+                    if (bindArrays)
                     {
-                        PrepareCommand(command, parameterDictionary);
-                        await command.ExecuteNonQueryAsync();
+                        var (stringCommand, parameterDictionary) = CreateInsertArrayBindData(events);
+
+                        using (var command = new OracleCommand(stringCommand, cn))
+                        {
+                            command.ArrayBindCount = events.Count();
+                            command.BindByName = true;
+
+                            PrepareCommand(command, parameterDictionary);
+                            await command.ExecuteNonQueryAsync();
+                        }
+                    }
+                    else
+                    {
+                        var dataTable = FillDataTable(events);
+                        var (stringCommand, parameterDictionary) = CreateInsertData(dataTable);
+
+                        using (var command = new OracleCommand(stringCommand, cn))
+                        {
+                            PrepareCommand(command, parameterDictionary);
+                            await command.ExecuteNonQueryAsync();
+                        }
                     }
                 }
             }
@@ -108,7 +201,7 @@ namespace Serilog.Sinks.Oracle
             }
         }
 
-        public void StoreLog(IEnumerable<LogEvent> events)
+        public void StoreLog(IEnumerable<LogEvent> events, bool bindArrays = false)
         {
             try
             {
@@ -116,13 +209,29 @@ namespace Serilog.Sinks.Oracle
                 {
                     cn.Open();
 
-                    var dataTable = FillDataTable(events);
-                    var (stringCommand, parameterDictionary) = CreateInsertData(dataTable);
-
-                    using (var command = new OracleCommand(stringCommand, cn))
+                    if (bindArrays)
                     {
-                        PrepareCommand(command, parameterDictionary);
-                        command.ExecuteNonQuery();
+                        var (stringCommand, parameterDictionary) = CreateInsertArrayBindData(events);
+
+                        using (var command = new OracleCommand(stringCommand, cn))
+                        {
+                            command.ArrayBindCount = events.Count();
+                            command.BindByName = true;
+
+                            PrepareCommand(command, parameterDictionary);
+                            command.ExecuteNonQuery();
+                        }
+                    }
+                    else
+                    {
+                        var dataTable = FillDataTable(events);
+                        var (stringCommand, parameterDictionary) = CreateInsertData(dataTable);
+
+                        using (var command = new OracleCommand(stringCommand, cn))
+                        {
+                            PrepareCommand(command, parameterDictionary);
+                            command.ExecuteNonQuery();
+                        }
                     }
                 }
             }
@@ -131,6 +240,130 @@ namespace Serilog.Sinks.Oracle
                 SelfLog.WriteLine(error.ToString());
             }
         }
+
+
+        public class ColumnInfo
+        {
+            public StandardColumn? StandardColumn { get; set; }
+            public bool AllowDBNull { get; set; }
+            public Type Type { get; set; }
+            public OracleDbType DataType { get; set; }
+            public long MaxLength { get; set; }
+            public string ColumnName { get; set; }
+        }
+
+        public IList<ColumnInfo> GetColumnsInfo()
+        {
+            IList<ColumnInfo> columnsInfo = new List<ColumnInfo>();
+
+            foreach (var standardColumn in _columnOptions.Store)
+            {
+                switch (standardColumn)
+                {
+                    case StandardColumn.Level:
+                        columnsInfo.Add(new ColumnInfo
+                        {
+                            StandardColumn = standardColumn,
+                            DataType = _columnOptions.Level.StoreAsEnum ? OracleDbType.Byte : OracleDbType.NVarchar2,
+                            Type = _columnOptions.Level.StoreAsEnum ? typeof(short) : typeof(string),
+                            MaxLength = _columnOptions.Level.StoreAsEnum ? -1 : 128,
+                            ColumnName = _columnOptions.Level.ColumnName ?? StandardColumn.Level.ToString(),
+                        });
+                        break;
+                    case StandardColumn.TimeStamp:
+                        columnsInfo.Add(new ColumnInfo
+                        {
+                            StandardColumn = standardColumn,
+                            DataType = OracleDbType.TimeStamp,
+                            Type = typeof(DateTimeOffset),
+                            ColumnName = _columnOptions.TimeStamp.ColumnName ?? StandardColumn.TimeStamp.ToString(),
+                            AllowDBNull = false
+                        });
+                        break;
+                    case StandardColumn.LogEvent:
+                        columnsInfo.Add(new ColumnInfo
+                        {
+                            StandardColumn = standardColumn,
+                            Type = typeof(string),
+                            DataType = OracleDbType.NVarchar2,
+                            ColumnName = _columnOptions.LogEvent.ColumnName ?? StandardColumn.LogEvent.ToString(),
+                        });
+                        break;
+                    case StandardColumn.Message:
+                        columnsInfo.Add(new ColumnInfo
+                        {
+                            StandardColumn = standardColumn,
+                            Type = typeof(string),
+                            DataType = OracleDbType.Clob,
+                            MaxLength = -1,
+                            ColumnName = _columnOptions.Message.ColumnName ?? StandardColumn.Message.ToString(),
+                        });
+                        break;
+                    case StandardColumn.MessageTemplate:
+                        columnsInfo.Add(new ColumnInfo
+                        {
+                            StandardColumn = standardColumn,
+                            Type = typeof(string),
+                            DataType = OracleDbType.Clob,
+                            MaxLength = -1,
+                            ColumnName = _columnOptions.MessageTemplate.ColumnName ?? StandardColumn.MessageTemplate.ToString(),
+                        });
+                        break;
+                    case StandardColumn.Exception:
+                        columnsInfo.Add(new ColumnInfo
+                        {
+                            StandardColumn = standardColumn,
+                            Type = typeof(string),
+                            DataType = OracleDbType.Clob,
+                            MaxLength = -1,
+                            ColumnName = _columnOptions.Exception.ColumnName ?? StandardColumn.Exception.ToString(),
+                        });
+                        break;
+                    case StandardColumn.Properties:
+                        columnsInfo.Add(new ColumnInfo
+                        {
+                            StandardColumn = standardColumn,
+                            Type = typeof(string),
+                            DataType = OracleDbType.Clob,
+                            MaxLength = -1,
+                            ColumnName = _columnOptions.Properties.ColumnName ?? StandardColumn.Properties.ToString(),
+                        });
+                        break;
+                    case StandardColumn.Id:
+                        if (!String.IsNullOrEmpty(_tableSpaceAndFunctionName))
+                        {
+                            columnsInfo.Add(new ColumnInfo
+                            {
+                                StandardColumn = standardColumn,
+                                Type = typeof(long),
+                                DataType = OracleDbType.Decimal,
+                                ColumnName =
+                                    !string.IsNullOrWhiteSpace(_columnOptions.Id.ColumnName)
+                                        ? _columnOptions.Id.ColumnName
+                                        : "Id"
+                            });
+                        }
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+
+            if (_columnOptions.AdditionalDataColumns != null)
+            {
+                var dataColumns = _columnOptions.AdditionalDataColumns.Select(x =>
+                    new ColumnInfo {
+                        StandardColumn = null,
+                        ColumnName = x.ColumnName,
+                        Type = typeof(string), DataType = OracleDbType.NVarchar2});
+
+                columnsInfo = columnsInfo.Concat(dataColumns).ToList();
+            }
+
+            return columnsInfo;
+        }
+
+
         public DataTable CreateDataTable()
         {
             var eventsTable = new DataTable(_tableSpaceAndTableName);
@@ -195,14 +428,17 @@ namespace Serilog.Sinks.Oracle
                         });
                         break;
                     case StandardColumn.Id:
-                        eventsTable.Columns.Add(new DataColumn
+                        if (!String.IsNullOrEmpty(_tableSpaceAndFunctionName))
                         {
-                            DataType = typeof(string),
-                            ColumnName =
-                                !string.IsNullOrWhiteSpace(_columnOptions.Id.ColumnName)
-                                    ? _columnOptions.Id.ColumnName
-                                    : "Id",
-                        });
+                            eventsTable.Columns.Add(new DataColumn
+                            {
+                                DataType = typeof(string),
+                                ColumnName =
+                                    !string.IsNullOrWhiteSpace(_columnOptions.Id.ColumnName)
+                                        ? _columnOptions.Id.ColumnName
+                                        : "Id",
+                            });
+                        }
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -211,7 +447,7 @@ namespace Serilog.Sinks.Oracle
 
             if (_columnOptions.AdditionalDataColumns != null)
             {
-                var dataColumns = _columnOptions.AdditionalDataColumns.Select(x => 
+                var dataColumns = _columnOptions.AdditionalDataColumns.Select(x =>
                     new DataColumn(x.ColumnName, x.DataType));
 
                 eventsTable.Columns.AddRange(dataColumns.ToArray());
@@ -233,7 +469,10 @@ namespace Serilog.Sinks.Oracle
                     switch (column)
                     {
                         case StandardColumn.Id:
-                            row[_columnOptions.Id.ColumnName ?? "Id"] = _tableSpaceAndFunctionName;
+                            if (!String.IsNullOrEmpty(_tableSpaceAndFunctionName))
+                            {
+                                row[_columnOptions.Id.ColumnName ?? "Id"] = _tableSpaceAndFunctionName;
+                            }
                             break;
                         case StandardColumn.Message:
                             row[_columnOptions.Message.ColumnName ?? "Message"] = logEvent.RenderMessage(_formatProvider);
