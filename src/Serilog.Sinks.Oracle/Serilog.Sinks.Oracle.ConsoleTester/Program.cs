@@ -1,4 +1,5 @@
 ﻿using Serilog.Events;
+using Serilog.Sinks.Oracle;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -25,9 +26,13 @@ namespace Serilog.Sinks.OracleConsoleTester
 
             var MyLogger = Log.Logger.ForContext<Serilog.Sinks.OracleConsoleTester.Program>();
 
-            var oraSinkAsm = Assembly.GetAssembly(typeof(Serilog.Sinks.Oracle.OracleSink));
+            var oraSinkAsm = Assembly.GetAssembly(typeof(Serilog.Sinks.Oracle.OraclePeriodBatchingSink));
             Console.WriteLine("Using {0} from {1}", oraSinkAsm.FullName, oraSinkAsm.CodeBase);
             Console.WriteLine("Location: {0}", oraSinkAsm.Location);
+
+
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
 
             for (int i = 0; i < (AmountOfLogs / 8); i++)
             {
@@ -44,8 +49,6 @@ namespace Serilog.Sinks.OracleConsoleTester
                 MyLogger.Verbose("Log Verbose message {i} and sleep for {slp} (ms)!", i, 0);
             }
 
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
 
             Log.CloseAndFlush();
 

@@ -2,11 +2,10 @@
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
+
+    <TargetFrameworks>net452;net461;netcoreapp2.1</TargetFrameworks>
+    <Platforms>AnyCPU</Platforms>
     
-    <TargetFrameworks>netcoreapp2.1;net452;net461</TargetFrameworks>
-    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
-    
-    <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
@@ -48,16 +47,8 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
-    <ProjectReference Include="..\Serilog.Sinks.Oracle\Serilog.Sinks.Oracle.csproj">
-    </ProjectReference>      
-  </ItemGroup>
-
   <ItemGroup>
-    <None Update="test.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>test.Designer.cs</LastGenOutput>
-    </None>
+    <ProjectReference Include="..\Serilog.Sinks.Oracle\Serilog.Sinks.Oracle.csproj"/>
   </ItemGroup>
 
 </Project>

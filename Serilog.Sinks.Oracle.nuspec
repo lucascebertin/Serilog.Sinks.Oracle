@@ -4,7 +4,7 @@
     <id>Serilog.Sinks.Oracle</id>
     <version>1.0.6</version>
     <title>Sink for Serilog, flushes logs on Oracle</title>
-    <authors>Lucas Cé Bertin,Henry Roeland</authors>
+    <authors>Lucas Cé Bertin</authors>
     <owners>Lucas Cé Bertin</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
@@ -12,7 +12,7 @@
     <iconUrl>http://serilog.net/images/serilog-sink-nuget.png</iconUrl>
     <description>A Serilog sink that writes events to Oracle</description>
     <summary>A Serilog sink that writes events to Oracle</summary>
-    <releaseNotes>Add multiple platforms(x86, x64) and frameworks(.NET4.5.2,.NET4.6.1,.NETStandard2.0, and .NETCore2.1) support</releaseNotes>
+    <releaseNotes>Add multiple framework(.NET4.5.2,.NET4.6.1, and .NETStandard2.0) support</releaseNotes>
     <tags>Serilog Sinks Oracle</tags>
   </metadata>
 </package>

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Serilog.Sinks.Oracle
 {
-    public class OracleSink : PeriodicBatchingSink
+    public class OraclePeriodBatchingSink : PeriodicBatchingSink
     {
         public const int DefaultBatchPostingLimit = 50;
         public static readonly TimeSpan DefaultPeriod = TimeSpan.FromSeconds(5);
@@ -17,7 +17,7 @@ namespace Serilog.Sinks.Oracle
         private readonly Database _database;
         private readonly bool _bindArrays;
 
-        public OracleSink(int batchSizeLimit, TimeSpan period, int queueLimit, IFormatProvider formatProvider,
+        public OraclePeriodBatchingSink(int batchSizeLimit, TimeSpan period, int queueLimit, IFormatProvider formatProvider,
             ColumnOptions columnOptions, 
             string tableSpaceAndTableName, 
             string tableSpaceAndFunctionName, 

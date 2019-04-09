@@ -19,7 +19,7 @@ namespace Serilog
             string tableSpaceAndTableName,
             string tableSpaceAndFunctionName,
             LogEventLevel restrictedToMinimumLevel = LevelAlias.Minimum,
-            int batchPostingLimit = OracleSink.DefaultBatchPostingLimit,
+            int batchPostingLimit = OraclePeriodBatchingSink.DefaultBatchPostingLimit,
             TimeSpan? period = null,
             int queueLimit = 100,
             IFormatProvider formatProvider = null,
@@ -31,10 +31,10 @@ namespace Serilog
             if (loggerConfiguration == null)
                 throw new ArgumentNullException(nameof(loggerConfiguration));
 
-            var defaultedPeriod = period ?? OracleSink.DefaultPeriod;
+            var defaultedPeriod = period ?? OraclePeriodBatchingSink.DefaultPeriod;
 
             return loggerConfiguration.Sink(
-                new OracleSink(
+                new OraclePeriodBatchingSink(
                     batchPostingLimit,
                     defaultedPeriod,
                     queueLimit,

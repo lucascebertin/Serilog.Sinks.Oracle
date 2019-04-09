@@ -46,22 +46,6 @@ Task("Restore")
 				Configuration = configuration,
 				PlatformTarget = PlatformTarget.MSIL
 			});
-
-		MSBuild(solutionPath, new MSBuildSettings {
-				Verbosity = Verbosity.Minimal,
-				ToolVersion = MSBuildToolVersion.VS2017,
-				Restore = true,
-				Configuration = configuration,
-				PlatformTarget = PlatformTarget.x86
-				});
-
-		MSBuild(solutionPath, new MSBuildSettings {
-				Verbosity = Verbosity.Minimal,
-				ToolVersion = MSBuildToolVersion.VS2017,
-				Restore = true,
-				Configuration = configuration,
-				PlatformTarget = PlatformTarget.x64
-				});
     });
 
 // Look under a 'Tests' folder and run dotnet test against all of those projects.
@@ -86,6 +70,7 @@ Task("Test")
 
 // Publish the app to the /dist folder
 Task("Publish")
+    .IsDependentOn("Clean")
     .IsDependentOn("Build")
     .Does(() =>
     {
@@ -109,29 +94,6 @@ Task("Publish")
 					ArgumentCustomization = args => args.Append("--no-restore"),
 				});
 
-			DotNetCorePublish(
-				project.FullPath,
-				new DotNetCorePublishSettings()
-				{
-					Configuration = configuration,
-					Framework = "net452",
-					Runtime = "win-x86",
-					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/net452",
-					ArgumentCustomization = args => args.Append("--no-restore"),
-				});
-
-			DotNetCorePublish(
-				project.FullPath,
-				new DotNetCorePublishSettings()
-				{
-					Configuration = configuration,
-					Framework = "net452",
-					Runtime = "win-x64",
-					OutputDirectory = build.ToString() + "/runtimes/win-x64/lib/net452",
-					ArgumentCustomization = args => args.Append("--no-restore"),
-				});
-
-
 			// .NET 4.6.1
 			DotNetCorePublish(
 				project.FullPath,
@@ -142,29 +104,6 @@ Task("Publish")
 					OutputDirectory = build.ToString() + "/lib/net461",
 					ArgumentCustomization = args => args.Append("--no-restore"),
 				});
-
-			DotNetCorePublish(
-				project.FullPath,
-				new DotNetCorePublishSettings()
-				{
-					Configuration = configuration,
-					Framework = "net461",
-					Runtime = "win-x86",
-					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/net461",
-					ArgumentCustomization = args => args.Append("--no-restore"),
-				});
-
-			DotNetCorePublish(
-				project.FullPath,
-				new DotNetCorePublishSettings()
-				{
-					Configuration = configuration,
-					Framework = "net461",
-					Runtime = "win-x64",
-					OutputDirectory = build.ToString() + "/runtimes/win-x64/lib/net461",
-					ArgumentCustomization = args => args.Append("--no-restore"),
-				});
-
 
 			// .NET Standard 2.0
 			DotNetCorePublish(
@@ -177,61 +116,6 @@ Task("Publish")
 					ArgumentCustomization = args => args.Append("--no-restore"),
 				});
 
-			DotNetCorePublish(
-				project.FullPath,
-				new DotNetCorePublishSettings()
-				{
-					Configuration = configuration,
-					Framework = "netstandard2.0",
-					Runtime = "win-x86",
-					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/netstandard2.0",
-					ArgumentCustomization = args => args.Append("--no-restore"),
-				});
-
-			DotNetCorePublish(
-				project.FullPath,
-				new DotNetCorePublishSettings()
-				{
-					Configuration = configuration,
-					Framework = "netstandard2.0",
-					Runtime = "win-x64",
-					OutputDirectory = build.ToString() + "/runtimes/win-x64/lib/netstandard2.0",
-					ArgumentCustomization = args => args.Append("--no-restore"),
-				});
-
-
-			// .NET Core 2.1
-			DotNetCorePublish(
-				project.FullPath,
-				new DotNetCorePublishSettings()
-				{
-					Configuration = configuration,
-					Framework = "netcoreapp2.1",
-					OutputDirectory = build.ToString() + "/lib/netcoreapp2.1",
-					ArgumentCustomization = args => args.Append("--no-restore"),
-				});
-
-			DotNetCorePublish(
-				project.FullPath,
-				new DotNetCorePublishSettings()
-				{
-					Configuration = configuration,
-					Framework = "netcoreapp2.1",
-					Runtime = "win-x86",
-					OutputDirectory = build.ToString() + "/runtimes/win-x86/lib/netcoreapp2.1",
-					ArgumentCustomization = args => args.Append("--no-restore"),
-				});
-
-			DotNetCorePublish(
-				project.FullPath,
-				new DotNetCorePublishSettings()
-				{
-					Configuration = configuration,
-					Framework = "netcoreapp2.1",
-					Runtime = "win-x64",
-					OutputDirectory = build.ToString() + "/runtimes/win-x64/lib/netcoreapp2.1",
-					ArgumentCustomization = args => args.Append("--no-restore"),
-				});
 			}
     });
 
@@ -257,32 +141,85 @@ Task("Package-NuGet")
 																	   },	
 									Dependencies			 = new [] {
 											// .NETFramework4.5.2
-											new NuSpecDependency {Id = "Serilog", TargetFramework="net452", Version="2.8.0"},
-											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework="net452", Version="2.1.1"},
-											new NuSpecDependency {Id = "FakeItEasy", TargetFramework="net452", Version="5.1.0"},
-											new NuSpecDependency {Id = "Oracle.ManagedDataAccess", TargetFramework="net452", Version="18.6.0"},
-											new NuSpecDependency {Id = "System.ValueTuple", TargetFramework="net452", Version="4.5.0"},
+											new NuSpecDependency {
+												Id = "Serilog", 
+												TargetFramework="net452", 
+												Version="2.8.0"
+											},
+											new NuSpecDependency {
+												Id = "Serilog.Sinks.PeriodicBatching", 
+												TargetFramework="net452", 
+												Version="2.1.1"
+											},
+											new NuSpecDependency {
+												Id = "FakeItEasy", 
+												TargetFramework="net452", 
+												Version="5.1.0"
+											},
+											new NuSpecDependency {
+												Id = "Oracle.ManagedDataAccess", 
+												TargetFramework="net452", 
+												Version="18.6.0"
+											},
+											new NuSpecDependency {
+												Id = "System.ValueTuple",
+												TargetFramework="net452", 
+												Version="4.5.0"
+											},
 
 											// .NETFramework4.6.1
-											new NuSpecDependency {Id = "Serilog", TargetFramework="net461", Version="2.8.0"},
-											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework="net461", Version="2.1.1"},
-											new NuSpecDependency {Id = "FakeItEasy", TargetFramework="net461", Version="5.1.0"},
-											new NuSpecDependency {Id = "Oracle.ManagedDataAccess", TargetFramework="net461", Version="18.6.0"},
-											new NuSpecDependency {Id = "System.ValueTuple", TargetFramework="net461", Version="4.5.0"},
+											new NuSpecDependency {
+												Id = "Serilog", 
+												TargetFramework="net461", 
+												Version="2.8.0"
+											},
+											new NuSpecDependency {
+												Id = "Serilog.Sinks.PeriodicBatching", 
+												TargetFramework="net461", 
+												Version="2.1.1"
+											},
+											new NuSpecDependency {
+												Id = "FakeItEasy", 
+												TargetFramework="net461", 
+												Version="5.1.0"
+											},
+											new NuSpecDependency {
+												Id = "Oracle.ManagedDataAccess", 
+												TargetFramework="net461", 
+												Version="18.6.0"
+											},
+											new NuSpecDependency {
+												Id = "System.ValueTuple", 
+												TargetFramework="net461",
+												Version="4.5.0"
+											},
 
 											// .NETStandard2.0
-											new NuSpecDependency {Id = "Serilog", TargetFramework="netstandard2.0", Version="2.8.0"},
-											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework="netstandard2.0", Version="2.1.1"},
-											new NuSpecDependency {Id = "FakeItEasy", TargetFramework="netstandard2.0", Version="5.1.0"},
-											new NuSpecDependency {Id = "Oracle.ManagedDataAccess.Core", TargetFramework="netstandard2.0", Version="2.18.6"},
-											new NuSpecDependency {Id = "NETStandard.Library", TargetFramework="netstandard2.0", Version="2.0.3"},
-
-											// .NETCore 2.1
-											new NuSpecDependency {Id = "Serilog", TargetFramework="netcoreapp2.1", Version="2.8.0"},
-											new NuSpecDependency {Id = "Serilog.Sinks.PeriodicBatching", TargetFramework="netcoreapp2.1", Version="2.1.1"},
-											new NuSpecDependency {Id = "FakeItEasy", TargetFramework="netcoreapp2.1", Version="5.1.0"},
-											new NuSpecDependency {Id = "Oracle.ManagedDataAccess.Core", TargetFramework="netcoreapp2.1", Version="2.18.6"},
-											new NuSpecDependency {Id = "Microsoft.NETCore.App", TargetFramework="netcoreapp2.1", Version="2.1.0"}
+											new NuSpecDependency {
+												Id = "Serilog", 
+												TargetFramework="netstandard2.0", 
+												Version="2.8.0"
+											},
+											new NuSpecDependency {
+												Id = "Serilog.Sinks.PeriodicBatching",
+												TargetFramework="netstandard2.0", 
+												Version="2.1.1"
+											},
+											new NuSpecDependency {
+												Id = "FakeItEasy", 
+												TargetFramework="netstandard2.0",
+												Version="5.1.0"
+											},
+											new NuSpecDependency {
+												Id = "Oracle.ManagedDataAccess.Core", 
+												TargetFramework="netstandard2.0",
+												Version="2.18.6"
+											},
+											new NuSpecDependency {
+												Id = "NETStandard.Library",
+												TargetFramework="netstandard2.0", 
+												Version="2.0.3"
+											},
 										},
                                      BasePath                = build,
                                      OutputDirectory         = nuget
