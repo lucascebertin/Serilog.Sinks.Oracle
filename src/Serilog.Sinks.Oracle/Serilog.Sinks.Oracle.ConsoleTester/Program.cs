@@ -1,5 +1,6 @@
 ﻿using Serilog.Events;
 using Serilog.Sinks.Oracle;
+using Serilog.Sinks.Oracle.Batch;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace Serilog.Sinks.OracleConsoleTester
 {
     class Program
     {
-        private const long AmountOfLogs = 10000;
+        private const long AmountOfLogs = 100000;
 
         static void Main(string[] args)
         {
@@ -19,17 +20,19 @@ namespace Serilog.Sinks.OracleConsoleTester
             var logConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["OracleLogDB"].ConnectionString;
 
             // Config Logging for commandline
+            //Log.Logger = new LoggerConfiguration()
+            //                .MinimumLevel.Verbose()
+            //                .WriteTo.Oracle(logConnectionString, "LOG", null, batchPostingLimit: 1000, queueLimit: (int)AmountOfLogs)
+            //                .CreateLogger();
+
             Log.Logger = new LoggerConfiguration()
-                            .MinimumLevel.Verbose()
-                            .WriteTo.Oracle(logConnectionString, "LOG", null, LogEventLevel.Verbose, batchPostingLimit:1000, bindArrays: true, queueLimit: (int)AmountOfLogs)
-                            .CreateLogger();
+                                .MinimumLevel.Verbose()
+                                .WriteTo.Batch((cfg) => cfg.UseBurstBatch()
+                                                            .UseOracle(logConnectionString)
+                                                            .CreateSink())
+                                .CreateLogger();
 
             var MyLogger = Log.Logger.ForContext<Serilog.Sinks.OracleConsoleTester.Program>();
-
-            var oraSinkAsm = Assembly.GetAssembly(typeof(Serilog.Sinks.Oracle.OraclePeriodBatchingSink));
-            Console.WriteLine("Using {0} from {1}", oraSinkAsm.FullName, oraSinkAsm.CodeBase);
-            Console.WriteLine("Location: {0}", oraSinkAsm.Location);
-
 
             Stopwatch sw = new Stopwatch();
             sw.Start();

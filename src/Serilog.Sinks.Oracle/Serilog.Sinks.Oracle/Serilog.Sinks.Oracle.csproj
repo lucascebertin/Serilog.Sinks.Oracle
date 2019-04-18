@@ -51,4 +51,8 @@
     <Compile Remove="OracleBurstSink.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Serilog.Sinks.Burst" Version="1.0.1" />
+  </ItemGroup>
+
 </Project>

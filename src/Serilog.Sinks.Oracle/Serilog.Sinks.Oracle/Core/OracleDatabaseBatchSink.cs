@@ -1,6 +1,7 @@
 ﻿using Oracle.ManagedDataAccess.Client;
 using Serilog.Debugging;
 using Serilog.Events;
+using Serilog.Sinks.Oracle.Batch;
 using Serilog.Sinks.Oracle.Columns;
 using System;
 using System.Collections.Generic;
@@ -11,9 +12,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Serilog.Sinks.Oracle
+namespace Serilog.Sinks.Oracle.Core
 {
-    public class Database
+    public class OracleDatabaseBatchSink : ILogEventBatchSink
     {
         private readonly string _connectionString;
         private readonly string _tableSpaceAndTableName;
@@ -23,16 +24,25 @@ namespace Serilog.Sinks.Oracle
         private readonly Properties _properties;
         private readonly IList<ColumnInfo> _columnsInfo;
         private readonly string _insertStatementForArrayBinding;
+        private readonly bool _bindArrays;
 
-        public Database(string connectionString, string tableSpaceAndTableName, string tableSpaceAndFunctionName, ColumnOptions columnOptions,
-            HashSet<string> additionalDataColumnNames, IFormatProvider formatProvider)
+        public OracleDatabaseBatchSink(
+                            string connectionString, 
+                            string tableSpaceAndTableName, 
+                            string tableSpaceAndFunctionName, 
+                            ColumnOptions columnOptions,
+                            HashSet<string> additionalDataColumnNames, 
+                            IFormatProvider formatProvider,
+                            bool bindArrays = false)
         {
             _connectionString = connectionString;
             _tableSpaceAndTableName = tableSpaceAndTableName;
             _tableSpaceAndFunctionName = tableSpaceAndFunctionName;
-            _columnOptions = columnOptions;
+            _columnOptions = columnOptions ?? new ColumnOptions();
             _formatProvider = formatProvider;
-            _properties = new Properties(columnOptions, additionalDataColumnNames, _formatProvider);
+            _properties = new Properties(_columnOptions, additionalDataColumnNames, _formatProvider);
+
+            _bindArrays = bindArrays;
             _columnsInfo = GetColumnsInfo();
             _insertStatementForArrayBinding = CreateInsertStatementForArrayBinding();
         }
@@ -161,7 +171,7 @@ namespace Serilog.Sinks.Oracle
             }
         }
 
-        public async Task StoreLogAsync(IEnumerable<LogEvent> events, bool bindArrays = false)
+        public async Task EmitBatchAsync(IEnumerable<LogEvent> events)
         {
             try
             {
@@ -169,7 +179,7 @@ namespace Serilog.Sinks.Oracle
                 {
                     await cn.OpenAsync().ConfigureAwait(false);
 
-                    if (bindArrays)
+                    if (_bindArrays)
                     {
                         var (stringCommand, parameterDictionary) = CreateInsertArrayBindData(events);
 
@@ -201,7 +211,8 @@ namespace Serilog.Sinks.Oracle
             }
         }
 
-        public void StoreLog(IEnumerable<LogEvent> events, bool bindArrays = false)
+
+        public void EmitBatch(IEnumerable<LogEvent> events)
         {
             try
             {
@@ -209,7 +220,7 @@ namespace Serilog.Sinks.Oracle
                 {
                     cn.Open();
 
-                    if (bindArrays)
+                    if (_bindArrays)
                     {
                         var (stringCommand, parameterDictionary) = CreateInsertArrayBindData(events);
 
@@ -510,5 +521,7 @@ namespace Serilog.Sinks.Oracle
 
             return eventsTable;
         }
+
+
     }
 }

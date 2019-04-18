@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Oracle.ManagedDataAccess.Client;
 using Serilog.Sinks.Oracle.Columns;
+using Serilog.Sinks.Oracle.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -28,7 +29,7 @@ namespace Serilog.Sinks.Oracle.UnitTests
             dataTable.Columns.Add(ColumnName, typeof(string));
             dataTable.Rows.Add("data");
 
-            var database = new Database(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
+            var database = new OracleDatabaseBatchSink(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
             var (insertData, _) = database.CreateInsertData(dataTable);
 
             insertData.Should().BeEquivalentTo(insertStatementExpected);
@@ -45,7 +46,7 @@ namespace Serilog.Sinks.Oracle.UnitTests
             dataTable.Rows.Add("data");
             dataTable.Rows.Add("data");
 
-            var database = new Database(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
+            var database = new OracleDatabaseBatchSink(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
             var (insertData, _) = database.CreateInsertData(dataTable);
 
             insertData.Should().BeEquivalentTo(insertStatementExpected);
@@ -61,7 +62,7 @@ namespace Serilog.Sinks.Oracle.UnitTests
             dataTable.Columns.Add(ColumnName, typeof(string));
             dataTable.Rows.Add(value);
 
-            var database = new Database(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
+            var database = new OracleDatabaseBatchSink(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
             var (_, parameters) = database.CreateInsertData(dataTable);
 
             parameters.ContainsKey(keyExpected).Should().BeTrue();
@@ -71,7 +72,7 @@ namespace Serilog.Sinks.Oracle.UnitTests
         [Fact(DisplayName = "Should return only one valid insert statement when added only one row")]
         public void Should_return_a_default_insert_statement_when_added_the_default_configuration()
         {
-            var database = new Database(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
+            var database = new OracleDatabaseBatchSink(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
             var defaultDataTable = database.CreateDataTable();
             var (id, message, messageTemplate, level, timestamp, exception, properties) =
                 ("seq", "", "", "Debug", DateTime.MaxValue, "", "<properties></properties>");
@@ -108,7 +109,7 @@ namespace Serilog.Sinks.Oracle.UnitTests
                 }
             };
 
-            var database = new Database(ConnectionString, TableName, FunctionName, columnOptions, additionalColumns, null);
+            var database = new OracleDatabaseBatchSink(ConnectionString, TableName, FunctionName, columnOptions, additionalColumns, null);
             var defaultDataTable = database.CreateDataTable();
             var (id, message, messageTemplate, level, timestamp, exception, properties) =
                 ("seq", "", "", "Debug", DateTime.MaxValue, "", "<properties></properties>");
@@ -135,7 +136,7 @@ namespace Serilog.Sinks.Oracle.UnitTests
         [Fact(DisplayName = "Should create an oracle command with the proper parameters")]
         public void Should_create_an_oracle_command_with_the_proper_parameters()
         {
-            var database = new Database(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
+            var database = new OracleDatabaseBatchSink(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
             var command = new OracleCommand();
             var parameters = new Dictionary<string, object>
             {
@@ -154,7 +155,7 @@ namespace Serilog.Sinks.Oracle.UnitTests
         [Fact(DisplayName = "Should create an oracle command with the proper parameters and with DbNull when a null value is provided")]
         public void Should_create_an_oracle_command_with_the_proper_parameters_and_with_DbNull_when_a_null_value_is_provided()
         {
-            var database = new Database(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
+            var database = new OracleDatabaseBatchSink(ConnectionString, TableName, FunctionName, _columnOptions, null, null);
             var command = new OracleCommand();
             var parameters = new Dictionary<string, object>
             {
