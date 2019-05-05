@@ -78,6 +78,13 @@ END;
   //Be aware of the batch limit and delay time configured up here!
   logger.Debug("Yey, this message will be stored on Oracle!!");
 ```
+## Travis useful notes
+At the root you will find a Docker file named `Dockerfile.travis`.
+To simulate, run this way:
+```
+docker build -t travis-ci-oracle -f Dockerfile.travis .
+docker run -it travis-ci-oracle
+```
 
 ## IMPORTANT NOTES!
 This repository and package are in early stages, so, use it on your own and risk but feel free to contribute opening issues or sending pull-requests!

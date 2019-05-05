@@ -1,4 +1,5 @@
 // Target - The task you want to start. Runs the Default task if not specified.
+#tool "nuget:?package=xunit.runner.console"
 
 using System.Text.RegularExpressions;
 
@@ -53,18 +54,19 @@ Task("Restore")
 Task("Test")
     .Does(() =>
     {
-        var projects = GetFiles("./src/Serilog.Sinks.Oracle/*UnitTests/*.csproj");
+        XUnit2("./src/Serilog.Sinks.Oracle/*Tests/bin/Release/net452/*.UnitTests.dll");
+        XUnit2("./src/Serilog.Sinks.Oracle/*Tests/bin/Release/net461/*.UnitTests.dll");
+
+        var projects = GetFiles("./src/Serilog.Sinks.Oracle/*Tests*/**/*.csproj");
         foreach(var project in projects)
         {
-            Information("Testing project " + project);
-            DotNetCoreTest(
-                project.ToString(),
-                new DotNetCoreTestSettings()
-                {
-                    Configuration = configuration,
-                    NoBuild = true,
-                    ArgumentCustomization = args => args.Append("--no-restore"),
-                });
+            DotNetCoreTest(project.ToString(), new DotNetCoreTestSettings()
+            {
+                Configuration = configuration,
+                Framework = "netcoreapp2.1",
+                NoBuild = true,
+                ArgumentCustomization = args => args.Append("--no-restore")
+            });
         }
     });
 
