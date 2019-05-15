@@ -115,25 +115,27 @@ namespace Serilog.Sinks.Oracle.Batch
 
         public ILogEventSink CreateSink()
         {
-            if (_batchConfig is PeriodicBatchConfig)
+            switch (_batchConfig)
             {
-                var cfg = _batchConfig as PeriodicBatchConfig;
+                case PeriodicBatchConfig _:
+                    {
+                        var cfg = (PeriodicBatchConfig)_batchConfig;
 
-                return new PeriodicBatchingSinkWrapper(async (lst) =>
-                        _storageSinks.ToList().ForEach(async (storage) =>
-                            await storage.EmitBatchAsync(lst)),
-                        cfg.PostingLimit,
-                        cfg.Period ?? PeriodicBatchingSinkWrapper.DefaultPeriod,
-                        cfg.QueueLimit);
-            }
-            else
-            if ( _batchConfig is BurstBatchConfig)
-            {
-                var cfg = _batchConfig as BurstBatchConfig;
+                        return new PeriodicBatchingSinkWrapper(async lst =>
+                                _storageSinks.ToList().ForEach(async storage =>
+                                    await storage.EmitBatchAsync(lst)),
+                            cfg.PostingLimit,
+                            cfg.Period ?? PeriodicBatchingSinkWrapper.DefaultPeriod,
+                            cfg.QueueLimit);
+                    }
+                case BurstBatchConfig _:
+                    {
+                        var cfg = (BurstBatchConfig)_batchConfig;
 
-                return new BurstSink((lst) => _storageSinks.ToList()
-                                                            .ForEach((storage) => storage.EmitBatch(lst)),
-                                                            cfg.EnableTimer, cfg.Interval, cfg.EnableBatchLimit, cfg.BatchLimit);
+                        return new BurstSink((lst) => _storageSinks.ToList()
+                                .ForEach((storage) => storage.EmitBatch(lst)),
+                            cfg.EnableTimer, cfg.Interval, cfg.EnableBatchLimit, cfg.BatchLimit);
+                    }
             }
 
             throw new NotSupportedException("You must select a Batch configuration (Periodic, Burst, ...)!");
