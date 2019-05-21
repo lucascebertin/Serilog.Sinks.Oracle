@@ -6,9 +6,7 @@ using Serilog.Sinks.Oracle.Columns;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -27,13 +25,13 @@ namespace Serilog.Sinks.Oracle.Core
         private readonly bool _bindArrays;
 
         public OracleDatabaseBatchSink(
-                            string connectionString, 
-                            string tableSpaceAndTableName, 
-                            string tableSpaceAndFunctionName, 
-                            ColumnOptions columnOptions,
-                            HashSet<string> additionalDataColumnNames, 
-                            IFormatProvider formatProvider,
-                            bool bindArrays = false)
+            string connectionString, 
+            string tableSpaceAndTableName, 
+            string tableSpaceAndFunctionName, 
+            ColumnOptions columnOptions,
+            HashSet<string> additionalDataColumnNames, 
+            IFormatProvider formatProvider,
+            bool bindArrays = false)
         {
             _connectionString = connectionString;
             _tableSpaceAndTableName = tableSpaceAndTableName;
@@ -69,46 +67,24 @@ namespace Serilog.Sinks.Oracle.Core
             {
                 object arrColData = null;
                 if (ci.StandardColumn == StandardColumn.Level)
-                {
                     if (ci.Type == typeof(string))
-                    {
                         arrColData = events.Select(s => s.Level.ToString()).ToArray();
-                    }
                     else
-                    {
                         arrColData = events.Select(s => (byte)s.Level).ToArray();
-                    }
-                }
-                else
-                if (ci.StandardColumn == StandardColumn.TimeStamp)
-                {
-                    arrColData = events.Select(s => _columnOptions.TimeStamp.ConvertToUtc ? s.Timestamp.DateTime.ToUniversalTime() : s.Timestamp.DateTime).ToArray();
-                }
-                else
-                if (ci.StandardColumn == StandardColumn.LogEvent)
-                {
+                else if (ci.StandardColumn == StandardColumn.TimeStamp)
+                    arrColData = events.Select(s => _columnOptions.TimeStamp.ConvertToUtc 
+                        ? s.Timestamp.DateTime.ToUniversalTime() 
+                        : s.Timestamp.DateTime).ToArray();
+                else if (ci.StandardColumn == StandardColumn.LogEvent)
                     arrColData = events.Select(s => _properties.LogEventToJson(s)).ToArray();
-                }
-                else
-                if (ci.StandardColumn == StandardColumn.Exception)
-                {
+                else if (ci.StandardColumn == StandardColumn.Exception)
                     arrColData = events.Select(s => s.Exception?.ToString()).ToArray();
-                }
-                else
-                if (ci.StandardColumn == StandardColumn.Message)
-                {
+                else if (ci.StandardColumn == StandardColumn.Message)
                     arrColData = events.Select(s => s.RenderMessage(_formatProvider)).ToArray();
-                }
-                else
-                if (ci.StandardColumn == StandardColumn.MessageTemplate)
-                {
+                else if (ci.StandardColumn == StandardColumn.MessageTemplate)
                     arrColData = events.Select(s => s.MessageTemplate.ToString()).ToArray();
-                }
-                else
-                if (ci.StandardColumn == StandardColumn.Properties)
-                {
+                else if (ci.StandardColumn == StandardColumn.Properties)
                     arrColData = events.Select(s => _properties.ConvertPropertiesToXmlStructure(s.Properties)).ToArray();
-                }
 
                 parameterDictionary.Add($"v_{ci.ColumnName}", arrColData);
             }
@@ -512,16 +488,12 @@ namespace Serilog.Sinks.Oracle.Core
                 }
 
                 if (_columnOptions.AdditionalDataColumns != null)
-                {
                     _properties.ConvertPropertiesToColumn(row, logEvent.Properties);
-                }
 
                 eventsTable.Rows.Add(row);
             }
 
             return eventsTable;
         }
-
-
     }
 }

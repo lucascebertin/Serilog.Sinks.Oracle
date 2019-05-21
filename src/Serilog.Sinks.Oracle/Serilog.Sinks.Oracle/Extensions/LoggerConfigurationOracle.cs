@@ -1,14 +1,9 @@
 ﻿using Serilog.Configuration;
 using Serilog.Core;
 using Serilog.Events;
-using Serilog.Sinks.Oracle;
 using Serilog.Sinks.Oracle.Batch;
 using Serilog.Sinks.Oracle.Columns;
-using Serilog.Sinks.PeriodicBatching;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Serilog
 {
@@ -35,16 +30,15 @@ namespace Serilog
             var defaultedPeriod = period ?? PeriodicBatchingSinkWrapper.DefaultPeriod;
 
             return loggerConfiguration.Batch((cfg) =>
-                                            cfg.UsePeriodicBatch(batchPostingLimit, period, queueLimit)
-                                                .UseOracle(connectionString,
-                                                            tableSpaceAndTableName,
-                                                            tableSpaceAndFunctionName,
-                                                            columnOptions,
-                                                            formatProvider,
-                                                            bindArrays)
-                                                .CreateSink());
+                cfg.UsePeriodicBatch(batchPostingLimit, period, queueLimit)
+                    .UseOracle(connectionString,
+                        tableSpaceAndTableName,
+                        tableSpaceAndFunctionName,
+                        columnOptions,
+                        formatProvider,
+                        bindArrays)
+                    .CreateSink());
         }
-
 
         public static LoggerConfiguration Batch(
             this LoggerSinkConfiguration loggerConfiguration,
@@ -55,11 +49,8 @@ namespace Serilog
                 throw new ArgumentNullException(nameof(loggerConfiguration));
 
             return loggerConfiguration.Sink(
-                        cfgFunc(new BatchLoggerConfiguration()),
-                        restrictedToMinimumLevel);
+                cfgFunc(new BatchLoggerConfiguration()),
+                restrictedToMinimumLevel);
         }
-
     }
-
-
 }

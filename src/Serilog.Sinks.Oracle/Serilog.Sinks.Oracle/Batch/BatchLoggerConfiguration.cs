@@ -1,13 +1,10 @@
 ﻿using Serilog.Core;
-using Serilog.Events;
 using Serilog.Sinks.Burst;
 using Serilog.Sinks.Oracle.Columns;
 using Serilog.Sinks.Oracle.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Serilog.Sinks.Oracle.Batch
 {
@@ -60,9 +57,7 @@ namespace Serilog.Sinks.Oracle.Batch
             int batchLimit = 100)
         {
             if (_batchConfig != null)
-            {
                 throw new NotSupportedException("Can not use more than 1 Batch Configuration!");
-            }
 
             _batchConfig = new BurstBatchConfig
             {
@@ -74,8 +69,6 @@ namespace Serilog.Sinks.Oracle.Batch
 
             return this;
         }
-
-
 
         public BatchLoggerConfiguration UseOracle(string connectionString, 
             string tableSpaceAndTableName = "LOG",
@@ -94,48 +87,41 @@ namespace Serilog.Sinks.Oracle.Batch
                 );
 
             _storageSinks.Add(new OracleDatabaseBatchSink(
-                                    connectionString, 
-                                    tableSpaceAndTableName, 
-                                    tableSpaceAndFunctionName, 
-                                    columnOptions, 
-                                    additionalDataColumnNames, 
-                                    formatProvider, 
-                                    bindArrays));
+                connectionString, 
+                tableSpaceAndTableName, 
+                tableSpaceAndFunctionName, 
+                columnOptions, 
+                additionalDataColumnNames, 
+                formatProvider, 
+                bindArrays));
 
             return this;
         }
-
-        public BatchLoggerConfiguration UseForStorage(ILogEventBatchSink storageSink)
-        {
-            _storageSinks.Add(storageSink);
-
-            return this;
-        }
-
 
         public ILogEventSink CreateSink()
         {
             switch (_batchConfig)
             {
                 case PeriodicBatchConfig _:
-                    {
-                        var cfg = (PeriodicBatchConfig)_batchConfig;
+                {
+                    var cfg = (PeriodicBatchConfig)_batchConfig;
 
-                        return new PeriodicBatchingSinkWrapper(async lst =>
-                                _storageSinks.ToList().ForEach(async storage =>
-                                    await storage.EmitBatchAsync(lst)),
-                            cfg.PostingLimit,
-                            cfg.Period ?? PeriodicBatchingSinkWrapper.DefaultPeriod,
-                            cfg.QueueLimit);
-                    }
+                    return new PeriodicBatchingSinkWrapper(lst =>
+                        _storageSinks.ToList()
+                            .ForEach(async storage => await storage.EmitBatchAsync(lst)),
+                        cfg.PostingLimit,
+                        cfg.Period ?? PeriodicBatchingSinkWrapper.DefaultPeriod,
+                        cfg.QueueLimit);
+                }
                 case BurstBatchConfig _:
-                    {
-                        var cfg = (BurstBatchConfig)_batchConfig;
+                {
+                    var cfg = (BurstBatchConfig)_batchConfig;
 
-                        return new BurstSink((lst) => _storageSinks.ToList()
-                                .ForEach((storage) => storage.EmitBatch(lst)),
-                            cfg.EnableTimer, cfg.Interval, cfg.EnableBatchLimit, cfg.BatchLimit);
-                    }
+                    return new BurstSink(lst => 
+                        _storageSinks.ToList()
+                            .ForEach(async storage => await storage.EmitBatchAsync(lst)),
+                        cfg.EnableTimer, cfg.Interval, cfg.EnableBatchLimit, cfg.BatchLimit);
+                }
             }
 
             throw new NotSupportedException("You must select a Batch configuration (Periodic, Burst, ...)!");

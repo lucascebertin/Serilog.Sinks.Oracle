@@ -21,9 +21,9 @@ namespace Serilog.Sinks.OracleConsoleTester
 
             // Config Logging for commandline
             Log.Logger = new LoggerConfiguration()
-                            .MinimumLevel.Verbose()
-                            .WriteTo.Oracle(logConnectionString, "LOG", null, batchPostingLimit: 1000, queueLimit: (int)AmountOfLogs)
-                            .CreateLogger();
+                .MinimumLevel.Verbose()
+                .WriteTo.Oracle(logConnectionString, "LOG", null, batchPostingLimit: 1000, queueLimit: (int)AmountOfLogs)
+                .CreateLogger();
 
             //Log.Logger = new LoggerConfiguration()
             //                    .MinimumLevel.Verbose()

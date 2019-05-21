@@ -33,34 +33,25 @@ namespace Serilog.Sinks.Oracle.Columns
                 {
                     var itemValue = Simplify(element.Value, options);
                     if (options.OmitElementIfEmpty && string.IsNullOrEmpty(itemValue))
-                    {
                         continue;
-                    }
 
                     if (isEmpty)
                     {
                         isEmpty = false;
+
                         if (!options.OmitDictionaryContainerElement)
-                        {
                             sb.AppendFormat("<{0}>", options.DictionaryElementName);
-                        }
                     }
 
                     var key = SimplifyScalar(element.Key.Value);
                     if (options.UsePropertyKeyAsElementName)
-                    {
                         sb.AppendFormat("<{0}>{1}</{0}>", GetValidElementName(key), itemValue);
-                    }
                     else
-                    {
                         sb.AppendFormat("<{0} key='{1}'>{2}</{0}>", options.ItemElementName, key, itemValue);
-                    }
                 }
 
                 if (!isEmpty && !options.OmitDictionaryContainerElement)
-                {
                     sb.AppendFormat("</{0}>", options.DictionaryElementName);
-                }
 
                 return sb.ToString();
             }
@@ -76,26 +67,20 @@ namespace Serilog.Sinks.Oracle.Columns
                 {
                     var itemValue = Simplify(element, options);
                     if (options.OmitElementIfEmpty && string.IsNullOrEmpty(itemValue))
-                    {
                         continue;
-                    }
 
                     if (isEmpty)
                     {
                         isEmpty = false;
                         if (!options.OmitSequenceContainerElement)
-                        {
                             sb.AppendFormat("<{0}>", options.SequenceElementName);
-                        }
                     }
 
                     sb.AppendFormat("<{0}>{1}</{0}>", options.ItemElementName, itemValue);
                 }
 
                 if (!isEmpty && !options.OmitSequenceContainerElement)
-                {
                     sb.AppendFormat("</{0}>", options.SequenceElementName);
-                }
 
                 return sb.ToString();
             }
@@ -113,47 +98,32 @@ namespace Serilog.Sinks.Oracle.Columns
                 {
                     var itemValue = element.Value;
                     if (options.OmitElementIfEmpty && string.IsNullOrEmpty(itemValue))
-                    {
                         continue;
-                    }
 
                     if (isEmpty)
                     {
                         isEmpty = false;
+
                         if (!options.OmitStructureContainerElement)
-                        {
                             if (options.UsePropertyKeyAsElementName)
-                            {
                                 sb.AppendFormat("<{0}>", GetValidElementName(str.TypeTag));
-                            }
                             else
-                            {
                                 sb.AppendFormat("<{0} type='{1}'>", options.StructureElementName, str.TypeTag);
-                            }
-                        }
                     }
 
                     if (options.UsePropertyKeyAsElementName)
-                    {
                         sb.AppendFormat("<{0}>{1}</{0}>", GetValidElementName(element.Key), itemValue);
-                    }
                     else
-                    {
                         sb.AppendFormat("<{0} key='{1}'>{2}</{0}>", options.PropertyElementName,
                             element.Key, itemValue);
-                    }
                 }
 
                 if (!isEmpty && !options.OmitStructureContainerElement)
                 {
                     if (options.UsePropertyKeyAsElementName)
-                    {
                         sb.AppendFormat("</{0}>", GetValidElementName(str.TypeTag));
-                    }
                     else
-                    {
                         sb.AppendFormat("</{0}>", options.StructureElementName);
-                    }
                 }
 
                 return sb.ToString();
