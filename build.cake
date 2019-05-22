@@ -7,7 +7,7 @@ var target = Argument("Target", "Default");
 var configuration = Argument("Configuration", "Release");
 var source = Argument("source", "https://api.nuget.org/v3/index.json");
 var apiKey = Argument<string>("apikey", null);
-var version = Argument("version", "1.0.6");
+var version = Argument("version", "1.1.0");
 
 Information($"Running target {target} in configuration {configuration}");
 
