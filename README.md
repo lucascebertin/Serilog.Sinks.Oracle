@@ -71,9 +71,12 @@ END;
 
   // If you choose to use the trigger just pass string.Empty in function name argument (tableSpaceAndFunctionName)
   var logger = new LoggerConfiguration()
-      .MinimumLevel.Debug()
-      .WriteTo.Oracle(connectionString, "YOUR_TABLE_SPACE.YOUR_TABLE_NAME", "YOUR_TABLE_SPACE.get_seq", LogEventLevel.Debug, 10, TimeSpan.FromSeconds(2))
-      .CreateLogger();
+	  .MinimumLevel.Verbose()
+	  .WriteTo.Oracle(cfg => 
+		  cfg.WithSettings(connectionString)
+		  .UseBurstBatch() // or if you want to use PeriodicBatch, call .UsePeriodicBatch()
+		  .CreateSink())
+	  .CreateLogger();
 
   //Be aware of the batch limit and delay time configured up here!
   logger.Debug("Yey, this message will be stored on Oracle!!");

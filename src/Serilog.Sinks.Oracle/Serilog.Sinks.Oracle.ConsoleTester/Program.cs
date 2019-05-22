@@ -20,17 +20,18 @@ namespace Serilog.Sinks.OracleConsoleTester
             var logConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["OracleLogDB"].ConnectionString;
 
             // Config Logging for commandline
+            //Log.Logger = new LoggerConfiguration()
+            //    .MinimumLevel.Verbose()
+            //    .WriteTo.Oracle(logConnectionString, "LOG", null, batchPostingLimit: 1000, queueLimit: (int)AmountOfLogs)
+            //    .CreateLogger();
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
-                .WriteTo.Oracle(logConnectionString, "LOG", null, batchPostingLimit: 1000, queueLimit: (int)AmountOfLogs)
+                .WriteTo.Oracle(cfg => 
+                    cfg.WithSettings(logConnectionString)
+                    .UseBurstBatch()
+                    .CreateSink())
                 .CreateLogger();
-
-            //Log.Logger = new LoggerConfiguration()
-            //                    .MinimumLevel.Verbose()
-            //                    .WriteTo.Batch((cfg) => cfg.UseBurstBatch()
-            //                                                .UseOracle(logConnectionString)
-            //                                                .CreateSink())
-            //                    .CreateLogger();
 
             var MyLogger = Log.Logger.ForContext<Serilog.Sinks.OracleConsoleTester.Program>();
 

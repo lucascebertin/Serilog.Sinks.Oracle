@@ -48,7 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Serilog.Sinks.Oracle\Serilog.Sinks.Oracle.csproj"/>
+    <ProjectReference Include="..\Serilog.Sinks.Oracle\Serilog.Sinks.Oracle.csproj" />
   </ItemGroup>
 
 </Project>

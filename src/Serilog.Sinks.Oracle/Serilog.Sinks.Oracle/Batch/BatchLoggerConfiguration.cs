@@ -28,7 +28,7 @@ namespace Serilog.Sinks.Oracle.Batch
         }
 
         IBatchConfig _batchConfig = null;
-        IList<ILogEventBatchSink> _storageSinks = new List<ILogEventBatchSink>();
+        ILogEventBatchSink sink; 
 
         public BatchLoggerConfiguration UsePeriodicBatch(
             int batchPostingLimit = PeriodicBatchingSinkWrapper.DefaultBatchPostingLimit,
@@ -36,9 +36,7 @@ namespace Serilog.Sinks.Oracle.Batch
             int queueLimit = 100)
         {
             if (_batchConfig != null)
-            {
-                throw new NotSupportedException("Can not use more than 1 Batch Configuration!");
-            }
+                throw new NotSupportedException("Can not use more than one Batch Configuration.");
 
             _batchConfig = new PeriodicBatchConfig
             {
@@ -57,7 +55,7 @@ namespace Serilog.Sinks.Oracle.Batch
             int batchLimit = 100)
         {
             if (_batchConfig != null)
-                throw new NotSupportedException("Can not use more than 1 Batch Configuration!");
+                throw new NotSupportedException("Can not use more than one Batch Configuration.");
 
             _batchConfig = new BurstBatchConfig
             {
@@ -70,7 +68,7 @@ namespace Serilog.Sinks.Oracle.Batch
             return this;
         }
 
-        public BatchLoggerConfiguration UseOracle(string connectionString, 
+        public BatchLoggerConfiguration WithSettings(string connectionString, 
             string tableSpaceAndTableName = "LOG",
             string tableSpaceAndFunctionName = null,
             ColumnOptions columnOptions = null,
@@ -86,29 +84,34 @@ namespace Serilog.Sinks.Oracle.Batch
                     StringComparer.OrdinalIgnoreCase
                 );
 
-            _storageSinks.Add(new OracleDatabaseBatchSink(
+            sink = new OracleDatabaseBatchSink(
                 connectionString, 
                 tableSpaceAndTableName, 
                 tableSpaceAndFunctionName, 
                 columnOptions, 
                 additionalDataColumnNames, 
                 formatProvider, 
-                bindArrays));
+                bindArrays);
 
             return this;
         }
 
         public ILogEventSink CreateSink()
         {
+            if (_batchConfig == null)
+                throw new NotSupportedException("Use the method UseBurstBatch or UsePeriodicBatch before calling CreateSink.");
+
+            if (sink == null)
+                throw new NotSupportedException("Use the method WithSettings before calling CreateSink.");
+
             switch (_batchConfig)
             {
                 case PeriodicBatchConfig _:
                 {
                     var cfg = (PeriodicBatchConfig)_batchConfig;
 
-                    return new PeriodicBatchingSinkWrapper(lst =>
-                        _storageSinks.ToList()
-                            .ForEach(async storage => await storage.EmitBatchAsync(lst)),
+                    return new PeriodicBatchingSinkWrapper(
+                        async lst => await sink.EmitBatchAsync(lst),
                         cfg.PostingLimit,
                         cfg.Period ?? PeriodicBatchingSinkWrapper.DefaultPeriod,
                         cfg.QueueLimit);
@@ -117,9 +120,8 @@ namespace Serilog.Sinks.Oracle.Batch
                 {
                     var cfg = (BurstBatchConfig)_batchConfig;
 
-                    return new BurstSink(lst => 
-                        _storageSinks.ToList()
-                            .ForEach(async storage => await storage.EmitBatchAsync(lst)),
+                    return new BurstSink(
+                        async lst => await sink.EmitBatchAsync(lst),
                         cfg.EnableTimer, cfg.Interval, cfg.EnableBatchLimit, cfg.BatchLimit);
                 }
             }
