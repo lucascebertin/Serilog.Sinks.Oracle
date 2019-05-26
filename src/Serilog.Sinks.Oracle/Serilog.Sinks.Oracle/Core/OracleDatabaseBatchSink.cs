@@ -63,7 +63,7 @@ namespace Serilog.Sinks.Oracle.Core
             // Fill parameter values
             var parameterDictionary = new Dictionary<string, object>();
 
-            foreach ( var ci in _columnsInfo)
+            foreach (var ci in _columnsInfo)
             {
                 object arrColData = null;
                 switch (ci.StandardColumn)
@@ -96,18 +96,15 @@ namespace Serilog.Sinks.Oracle.Core
                         break;
                     case StandardColumn.Id:
                         break;
-                    case null:
-                        break;
                     default:
                         var untypedArray = events
                             .Select(x => x.Properties[ci.ColumnName])
                             .Select(x => new {Data = x, Type = x.GetType()})
-                            .Select(x =>
-                                x.Type == typeof(ScalarValue)
-                                    ? ((ScalarValue) x.Data).Value.ToString()
-                                    : Types.TryChangeType(x.Data, ci.Type, out var conversion)
-                                        ? conversion
-                                        : DBNull.Value)
+                            .Select(x => x.Type == typeof(ScalarValue)
+                                ? ((ScalarValue) x.Data).Value.ToString()
+                                : Types.TryChangeType(x.Data, ci.Type, out var conversion)
+                                    ? conversion
+                                    : DBNull.Value)
                             .ToArray();
 
                         var typedArray = Array.CreateInstance(ci.Type, untypedArray.Length);

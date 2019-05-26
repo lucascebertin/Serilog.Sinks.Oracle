@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Oracle.ManagedDataAccess.Client;
+using Serilog.Events;
 using Serilog.Sinks.Oracle.Columns;
 using Serilog.Sinks.Oracle.Core;
 using System;
@@ -175,6 +176,35 @@ namespace Serilog.Sinks.Oracle.UnitTests
                 .ToDictionary(parameter => parameter.ParameterName, parameter => parameter.Value);
 
             relevantParameterKeyValue.Should().BeEquivalentTo(parametersExpected);
+        }
+
+        [Fact(DisplayName = "Should return a dictionary with the custom field added")]
+        public void Should_return_a_dictionary_with_the_custom_field_added()
+        {
+            const string newColumnName = "NewColumn";
+            var columnOptions = new ColumnOptions
+            {
+                AdditionalDataColumns = new List<DataColumn>
+                {
+                    new DataColumn(newColumnName, typeof(string))
+                }
+            };
+
+            var database = new OracleDatabaseBatchSink(ConnectionString, TableName, FunctionName, columnOptions, null, null);
+
+            var (_, data) = database.CreateInsertArrayBindData(new List<LogEvent>
+            {
+                new LogEvent(DateTimeOffset.UtcNow, LogEventLevel.Error, null, MessageTemplate.Empty, new List<LogEventProperty> {
+                    new LogEventProperty(newColumnName, new ScalarValue("Test"))
+                })
+            });
+
+            if (data.TryGetValue($"v_{newColumnName}", out var addedValue))
+                ((string[])addedValue).First()
+                    .Should()
+                    .Be("Test");
+            else
+                throw new Exception("Not found any value on custom fields");
         }
     }
 }

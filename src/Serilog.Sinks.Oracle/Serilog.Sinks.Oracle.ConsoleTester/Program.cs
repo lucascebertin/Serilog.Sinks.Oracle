@@ -1,7 +1,4 @@
-﻿using Serilog.Sinks.Oracle.Columns;
-using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using System;
 using System.Diagnostics;
 
 namespace Serilog.Sinks.OracleConsoleTester
@@ -22,21 +19,23 @@ namespace Serilog.Sinks.OracleConsoleTester
             //    .WriteTo.Oracle(logConnectionString, "LOG", null, batchPostingLimit: 1000, queueLimit: (int)AmountOfLogs)
             //    .CreateLogger();
 
-            const string column = "ADDITIONALDATACOLUMN";
-            var columnOptions = new ColumnOptions
-            {
-                AdditionalDataColumns = new List<DataColumn>
-                {
-                    new DataColumn(column , typeof(string))
-                }
-            };
+
+            /* Uncomment to test custom fields */
+            //const string column = "ADDITIONALDATACOLUMN";
+            //var columnOptions = new ColumnOptions
+            //{
+            //    AdditionalDataColumns = new List<DataColumn>
+            //    {
+            //        new DataColumn(column , typeof(string))
+            //    }
+            //};
 
             Log.Logger = new LoggerConfiguration()
-                .Enrich.FromLogContext()
-                .Enrich.WithProperty(column, "TEST")
+                //.Enrich.FromLogContext() /* uncomment this line if you want to store dynamic values and passing them by LogContext.PushProperty(name, value)... remember, this PushProperty is Disposable */
+                //.Enrich.WithProperty("column", "constant value, lika machine's hostname")  /* uncomment this line if you want to store a "constant value" */
                 .MinimumLevel.Verbose()
                 .WriteTo.Oracle(cfg =>
-                    cfg.WithSettings(logConnectionString, columnOptions: columnOptions)
+                    cfg.WithSettings(logConnectionString/*, columnOptions: columnOptions*/)
                     .UseBurstBatch()
                     .CreateSink())
                 .CreateLogger();
@@ -46,9 +45,11 @@ namespace Serilog.Sinks.OracleConsoleTester
             var sw = new Stopwatch();
             sw.Start();
 
-
             for (var i = 0; i < AmountOfLogs / 8; i++)
             {
+                /* Uncomment if you like to test custom fields */
+                //using (LogContext.PushProperty(column, "Test"))
+                //{
                 myLogger.Error("Simple Error Message");
                 myLogger.Warning("Simple Warning Message");
                 myLogger.Information("Simple Information Message");
@@ -57,6 +58,7 @@ namespace Serilog.Sinks.OracleConsoleTester
                 myLogger.Information("Log message {i} and sleep for {slp} (ms)!", i, 0);
                 myLogger.Debug("Log Debug message {i} and sleep for {slp} (ms)!", i, 0);
                 myLogger.Verbose("Log Verbose message {i} and sleep for {slp} (ms)!", i, 0);
+                //}
             }
 
             Log.CloseAndFlush();
