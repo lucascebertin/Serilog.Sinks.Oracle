@@ -1,6 +1,6 @@
 # Serilog.Sinks.Oracle
 
-This project is a port from [Serilog.Sinks.MSSqlServerCore].
+This project is a port from [Serilog.Sinks.MSSqlServerCore][serilog-mssql-url].
 It's a netstandard2 library to provide a clean way to send Serilog events to Oracle 11 (and possible 12 too).
 
 [![Linux Build][travis-image]][travis-url]
@@ -78,6 +78,26 @@ END;
 		  .CreateSink())
 	  .CreateLogger();
 
+  const string column = "ADDITIONALDATACOLUMN";
+  var columnOptions = new ColumnOptions
+  {
+      AdditionalDataColumns = new List<DataColumn>
+      {
+          new DataColumn(column , typeof(string))
+      }
+  };
+
+  Log.Logger = new LoggerConfiguration()
+      //.Enrich.FromLogContext() /* uncomment this line if you want to store dynamic values and passing them by LogContext.PushProperty(name, value)... remember, this PushProperty is Disposable*/
+      //.Enrich.WithProperty("column", "constant value, lika machine's hostname")  /* uncomment this line if you want to store a "constant value" */
+      .MinimumLevel.Verbose()
+      .WriteTo.Oracle(cfg =>
+          cfg.WithSettings(logConnectionString, columnOptions: columnOptions)
+          .UseBurstBatch()
+          .CreateSink())
+      .CreateLogger();
+
+
   //Be aware of the batch limit and delay time configured up here!
   logger.Debug("Yey, this message will be stored on Oracle!!");
 ```
@@ -97,3 +117,6 @@ This repository and package are in early stages, so, use it on your own and risk
 
 [appveyor-image]: https://ci.appveyor.com/api/projects/status/g7tw6rhtysx8t3w5?svg=true
 [appveyor-url]: https://ci.appveyor.com/project/lcssk8board/serilog-sinks-oracle
+
+[serilog-mssql-url]: https://github.com/serilog/serilog-sinks-mssqlserver
+
