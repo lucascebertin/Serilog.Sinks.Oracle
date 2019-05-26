@@ -1,11 +1,8 @@
-﻿using Serilog.Events;
-using Serilog.Sinks.Oracle;
-using Serilog.Sinks.Oracle.Batch;
+﻿using Serilog.Sinks.Oracle.Columns;
 using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
 
 namespace Serilog.Sinks.OracleConsoleTester
 {
@@ -13,9 +10,9 @@ namespace Serilog.Sinks.OracleConsoleTester
     {
         private const long AmountOfLogs = 100000;
 
-        static void Main(string[] args)
+        static void Main()
         {
-            Serilog.Debugging.SelfLog.Enable(Console.Error);
+            Debugging.SelfLog.Enable(Console.Error);
 
             var logConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["OracleLogDB"].ConnectionString;
 
@@ -25,34 +22,42 @@ namespace Serilog.Sinks.OracleConsoleTester
             //    .WriteTo.Oracle(logConnectionString, "LOG", null, batchPostingLimit: 1000, queueLimit: (int)AmountOfLogs)
             //    .CreateLogger();
 
+            const string column = "ADDITIONALDATACOLUMN";
+            var columnOptions = new ColumnOptions
+            {
+                AdditionalDataColumns = new List<DataColumn>
+                {
+                    new DataColumn(column , typeof(string))
+                }
+            };
+
             Log.Logger = new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .Enrich.WithProperty(column, "TEST")
                 .MinimumLevel.Verbose()
-                .WriteTo.Oracle(cfg => 
-                    cfg.WithSettings(logConnectionString)
+                .WriteTo.Oracle(cfg =>
+                    cfg.WithSettings(logConnectionString, columnOptions: columnOptions)
                     .UseBurstBatch()
                     .CreateSink())
                 .CreateLogger();
 
-            var MyLogger = Log.Logger.ForContext<Serilog.Sinks.OracleConsoleTester.Program>();
+            var myLogger = Log.Logger.ForContext<Program>();
 
-            Stopwatch sw = new Stopwatch();
+            var sw = new Stopwatch();
             sw.Start();
 
-            for (int i = 0; i < (AmountOfLogs / 8); i++)
+
+            for (var i = 0; i < AmountOfLogs / 8; i++)
             {
-                MyLogger.Error("Simple Error Message");
-                MyLogger.Warning("Simple Warning Message");
-                MyLogger.Information("Simple Information Message");
-                MyLogger.Debug("Simple Debug message!");
-                MyLogger.Verbose("Simple Verbose message!");
-
-                MyLogger.Information("Log message {i} and sleep for {slp} (ms)!", i, 0);
-
-                MyLogger.Debug("Log Debug message {i} and sleep for {slp} (ms)!", i, 0);
-
-                MyLogger.Verbose("Log Verbose message {i} and sleep for {slp} (ms)!", i, 0);
+                myLogger.Error("Simple Error Message");
+                myLogger.Warning("Simple Warning Message");
+                myLogger.Information("Simple Information Message");
+                myLogger.Debug("Simple Debug message!");
+                myLogger.Verbose("Simple Verbose message!");
+                myLogger.Information("Log message {i} and sleep for {slp} (ms)!", i, 0);
+                myLogger.Debug("Log Debug message {i} and sleep for {slp} (ms)!", i, 0);
+                myLogger.Verbose("Log Verbose message {i} and sleep for {slp} (ms)!", i, 0);
             }
-
 
             Log.CloseAndFlush();
 

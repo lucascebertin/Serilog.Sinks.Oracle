@@ -83,7 +83,6 @@ namespace Serilog.Sinks.Oracle.Columns
             }
         }
 
-
         public string LogEventToJson(LogEvent logEvent)
         {
             if (_columnOptions.LogEvent.ExcludeAdditionalProperties)

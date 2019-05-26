@@ -25,11 +25,11 @@ namespace Serilog.Sinks.Oracle.Core
         private readonly bool _bindArrays;
 
         public OracleDatabaseBatchSink(
-            string connectionString, 
-            string tableSpaceAndTableName, 
-            string tableSpaceAndFunctionName, 
+            string connectionString,
+            string tableSpaceAndTableName,
+            string tableSpaceAndFunctionName,
             ColumnOptions columnOptions,
-            HashSet<string> additionalDataColumnNames, 
+            HashSet<string> additionalDataColumnNames,
             IFormatProvider formatProvider,
             bool bindArrays = false)
         {
@@ -66,25 +66,56 @@ namespace Serilog.Sinks.Oracle.Core
             foreach ( var ci in _columnsInfo)
             {
                 object arrColData = null;
-                if (ci.StandardColumn == StandardColumn.Level)
-                    if (ci.Type == typeof(string))
-                        arrColData = events.Select(s => s.Level.ToString()).ToArray();
-                    else
-                        arrColData = events.Select(s => (byte)s.Level).ToArray();
-                else if (ci.StandardColumn == StandardColumn.TimeStamp)
-                    arrColData = events.Select(s => _columnOptions.TimeStamp.ConvertToUtc 
-                        ? s.Timestamp.DateTime.ToUniversalTime() 
-                        : s.Timestamp.DateTime).ToArray();
-                else if (ci.StandardColumn == StandardColumn.LogEvent)
-                    arrColData = events.Select(s => _properties.LogEventToJson(s)).ToArray();
-                else if (ci.StandardColumn == StandardColumn.Exception)
-                    arrColData = events.Select(s => s.Exception?.ToString()).ToArray();
-                else if (ci.StandardColumn == StandardColumn.Message)
-                    arrColData = events.Select(s => s.RenderMessage(_formatProvider)).ToArray();
-                else if (ci.StandardColumn == StandardColumn.MessageTemplate)
-                    arrColData = events.Select(s => s.MessageTemplate.ToString()).ToArray();
-                else if (ci.StandardColumn == StandardColumn.Properties)
-                    arrColData = events.Select(s => _properties.ConvertPropertiesToXmlStructure(s.Properties)).ToArray();
+                switch (ci.StandardColumn)
+                {
+                    case StandardColumn.Level:
+                        arrColData = ci.Type == typeof(string)
+                            ? (object) events.Select(s => s.Level.ToString()).ToArray()
+                            : events.Select(s => (byte) s.Level).ToArray();
+                        break;
+                    case StandardColumn.TimeStamp:
+                        arrColData = events.Select(s => _columnOptions.TimeStamp.ConvertToUtc
+                            ? s.Timestamp.DateTime.ToUniversalTime()
+                            : s.Timestamp.DateTime).ToArray();
+                        break;
+                    case StandardColumn.LogEvent:
+                        arrColData = events.Select(s => _properties.LogEventToJson(s)).ToArray();
+                        break;
+                    case StandardColumn.Exception:
+                        arrColData = events.Select(s => s.Exception?.ToString()).ToArray();
+                        break;
+                    case StandardColumn.Message:
+                        arrColData = events.Select(s => s.RenderMessage(_formatProvider)).ToArray();
+                        break;
+                    case StandardColumn.MessageTemplate:
+                        arrColData = events.Select(s => s.MessageTemplate.ToString()).ToArray();
+                        break;
+                    case StandardColumn.Properties:
+                        arrColData = events.Select(s => _properties.ConvertPropertiesToXmlStructure(s.Properties))
+                            .ToArray();
+                        break;
+                    case StandardColumn.Id:
+                        break;
+                    case null:
+                        break;
+                    default:
+                        var untypedArray = events
+                            .Select(x => x.Properties[ci.ColumnName])
+                            .Select(x => new {Data = x, Type = x.GetType()})
+                            .Select(x =>
+                                x.Type == typeof(ScalarValue)
+                                    ? ((ScalarValue) x.Data).Value.ToString()
+                                    : Types.TryChangeType(x.Data, ci.Type, out var conversion)
+                                        ? conversion
+                                        : DBNull.Value)
+                            .ToArray();
+
+                        var typedArray = Array.CreateInstance(ci.Type, untypedArray.Length);
+                        Array.Copy(untypedArray, typedArray, untypedArray.Length);
+
+                        arrColData = typedArray;
+                        break;
+                }
 
                 parameterDictionary.Add($"v_{ci.ColumnName}", arrColData);
             }
