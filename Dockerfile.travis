@@ -1,0 +1,9 @@
+FROM andrewlock/dotnet-mono:latest
+
+WORKDIR /usr/app
+COPY . .
+
+RUN sed -i 's/\r$//' ./build.sh && chmod +x ./build.sh
+
+RUN ./build.sh --target BuildAndTest
+
