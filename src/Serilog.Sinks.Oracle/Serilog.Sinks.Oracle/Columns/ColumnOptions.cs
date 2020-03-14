@@ -28,7 +28,8 @@ namespace Serilog.Sinks.Oracle.Columns
                 StandardColumn.Level,
                 StandardColumn.TimeStamp,
                 StandardColumn.Exception,
-                StandardColumn.Properties
+                StandardColumn.Properties,
+                StandardColumn.LogEvent
             };
 
             Message = new MessageColumnOptions();
