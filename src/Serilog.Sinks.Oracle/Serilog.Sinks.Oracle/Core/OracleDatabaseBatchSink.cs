@@ -138,12 +138,12 @@ namespace Serilog.Sinks.Oracle.Core
                 var eventsTableRow = dataTable.Rows[i];
 
                 var rows = string.Join(", ", insertedColumns.Select(x =>
-                    x.ColumnName == "Id" ? eventsTableRow["Id"] : $":{x.ColumnName}_{i}"));
+                    (x.ColumnName == (_columnOptions.Id.ColumnName ?? "Id")) ? eventsTableRow[_columnOptions.Id.ColumnName ?? "Id"] : $":{x.ColumnName}_{i}"));
 
                 selectBuilder.AppendLine($"  INTO {_tableSpaceAndTableName} ({cols}) VALUES ({rows})");
 
                 foreach (var eventsTableColumn in insertedColumns)
-                    if (eventsTableColumn.ColumnName != "Id")
+                    if (eventsTableColumn.ColumnName != (_columnOptions.Id.ColumnName ?? "Id"))
                         parameterDictionary[$":{eventsTableColumn.ColumnName}_{i}"] = Convert.ChangeType(
                             eventsTableRow[eventsTableColumn.ColumnName], eventsTableColumn.DataType);
             }
