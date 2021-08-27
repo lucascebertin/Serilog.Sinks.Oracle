@@ -97,6 +97,13 @@ namespace Serilog.Sinks.Oracle.Core
                     case StandardColumn.Id:
                         break;
                     default:
+					    
+						// if there are no properties for the additional column, pass a null value
+                        if (!events.Any(e => e.Properties.TryGetValue(ci.ColumnName, out _)))
+                        {
+                            break;
+                        }
+					
                         var untypedArray = events
                             .Select(x => x.Properties[ci.ColumnName])
                             .Select(x => new {Data = x, Type = x.GetType()})
