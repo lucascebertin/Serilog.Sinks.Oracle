@@ -118,6 +118,16 @@ Task("Publish")
 					ArgumentCustomization = args => args.Append("--no-restore"),
 				});
 
+			// .NET 6.0
+			DotNetCorePublish(
+				project.FullPath,
+				new DotNetCorePublishSettings()
+				{
+					Configuration = configuration,
+					Framework = "net6.0",
+					OutputDirectory = build.ToString() + "/lib/net6.0",
+					ArgumentCustomization = args => args.Append("--no-restore"),
+				});
 			}
     });
 
@@ -221,6 +231,28 @@ Task("Package-NuGet")
 												Id = "NETStandard.Library",
 												TargetFramework="netstandard2.0", 
 												Version="2.0.3"
+											},
+
+											// .NET 6.0
+											new NuSpecDependency {
+												Id = "Serilog", 
+												TargetFramework="net6.0", 
+												Version="2.10.0"
+											},
+											new NuSpecDependency {
+												Id = "Serilog.Sinks.PeriodicBatching",
+												TargetFramework="net6.0", 
+												Version="2.3.1"
+											},
+											new NuSpecDependency {
+												Id = "FakeItEasy", 
+												TargetFramework="net6.0",
+												Version="7.3.0"
+											},
+											new NuSpecDependency {
+												Id = "Oracle.ManagedDataAccess.Core", 
+												TargetFramework="net6.0",
+												Version="3.21.50"
 											},
 										},
                                      BasePath                = build,
